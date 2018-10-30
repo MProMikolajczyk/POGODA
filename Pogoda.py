@@ -53,22 +53,42 @@ class Operacje_na_plikach(object):
     def __init__(self):
         self.nazwy_kolumn=["TEMPERATURA","OPAD","DATA","CZAS"]
 
+    #dopiywanie
     def dopisanie_do_pliku(self,dane_1,dane_2):
         with open("pogoda_data.csv" , "a", newline="", encoding='utf-8') as csvfile:
             write =self.csv.DictWriter(csvfile, fieldnames=self.nazwy_kolumn)
             write.writerow({"TEMPERATURA": dane_1, "OPAD":dane_2,"DATA":self.datetime.now().strftime('%Y-%m-%d'),"CZAS":self.datetime.now().strftime('%H:%M:%S')})
 
-    def oczytywanie_pliku(self):
-        with open("pogoda_data.csv", "r") as csvfile:
-            reader =self.csv.DictReader(csvfile)
-            for row in reader:
-                print(row)
+    #operacje na całym pliku
+    def odczyt_danych(self):
+        #for i in list(Operacje_na_plikach().zakres_wierszy(1, 6)):
+            #print(i)
+        pass
 
+    #operacje na kolumnach
     def odczyt_danych_z_kolumn(self,nr_kolumny):
         with open("pogoda_data.csv", "r") as csvfile:
             reader =self.csv.DictReader(csvfile)
             for row in reader:
                 yield(row[self.nazwy_kolumn[nr_kolumny]])
+
+    def zakres_kolumn(self,start=0, finish=True,nr_kolumny=0): #wyniki od start do finish z dla nr kolumny
+        zakres = list(self.odczyt_danych_z_kolumn(nr_kolumny))
+        for wiersz in range(start, finish):
+            yield zakres[wiersz]
+
+    #operacje na wierszach
+    def odczyt_danych_z_wierszy(self):
+        with open("pogoda_data.csv", "r") as csvfile:
+            reader =self.csv.DictReader(csvfile)
+            for row in reader:
+                    yield row
+
+    def zakres_wierszy(self,start=0, finish=True): #wyniki od start do finish dla wszystkich wierszy
+        zakres = list(self.odczyt_danych_z_wierszy())
+        for wiersz in range(start, finish):
+            yield zakres[wiersz]
+
 
 #----------------------------------Główna zawartość---------------------------
 from time import sleep
