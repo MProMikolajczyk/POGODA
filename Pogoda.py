@@ -67,23 +67,27 @@ class Operacje_na_plikach(object):
             write = self.csv.DictWriter(csvfile, fieldnames=self.nazwy_kolumn)
             write.writeheader()
             godz = self.datetime.datetime(2018, 11, 5, 0, 0)
-            while godz <= self.datetime.datetime(2018, 11, 5, 23, 59):
+            while godz <= self.datetime.datetime.now().combine(self.datetime.datetime.today().date(),self.datetime.time(23, 59, 59)):
                 for ID in range(0, 96):
-                    write.writerow({"DATA": self.datetime.datetime.now().strftime('%Y-%m-%d'), "CZAS": godz.strftime('%H:%M:%S'), "ID": ID})
+                    write.writerow({"DATA": godz.strftime('%Y-%m-%d'), "CZAS": godz.strftime('%H:%M:%S'), "ID": ID})
                     godz += self.datetime.timedelta(minutes=15)
-        self.nadpisywanie()
 
     def nadpisywanie(self):
-        value='5'
         with open('pogoda_data_sort.csv', 'r') as readfile:
             reader = self.csv.reader(readfile)
             lines = list(reader)
-            time='23:44:33'
-            for pozycja in range(2,97):
-                if time >= lines[pozycja-1][3] and time < lines[pozycja][3]:
-                    lines[pozycja-1][0]=value
-            if time >= lines[96][3]:
-                lines[96][0] = value
+            for pozycja_plik_sort in range(len(list(self.odczyt_danych_z_wierszy()))):
+                temp = list(self.odczyt_danych_z_wierszy())[pozycja_plik_sort]['TEMPERATURA']
+                opad = list(self.odczyt_danych_z_wierszy())[pozycja_plik_sort]['OPAD']
+                time=list(self.odczyt_danych_z_wierszy())[pozycja_plik_sort]['CZAS']
+                date=list(self.odczyt_danych_z_wierszy())[pozycja_plik_sort]['DATA']
+                for pozycja_plik_log in range(2,len(lines)):
+                    if time >= lines[pozycja_plik_log-1][3] and time < lines[pozycja_plik_log][3] and date==lines[pozycja_plik_log][2] and lines[pozycja_plik_log][4]<'95': #dla wszytkich par
+                        lines[pozycja_plik_log-1][0] = temp
+                        lines[pozycja_plik_log - 1][1] = opad
+                    elif time >= lines[pozycja_plik_log-1][3] and date==lines[pozycja_plik_log][2] and lines[pozycja_plik_log][4] == '95': #ID pozycji pliku_sort
+                        lines[pozycja_plik_log][0] = temp
+                        lines[pozycja_plik_log][1] = opad
         with open('pogoda_data_sort.csv', 'w') as writefile:
             writer = self.csv.writer(writefile)
             writer.writerows(lines)
@@ -124,6 +128,7 @@ def main():
         print(pozyskiwane_dane.aktualne_opady())
         operacje_na_plikach.dopisanie_do_pliku_log(pozyskiwane_dane.akutualna_temp(),pozyskiwane_dane.aktualne_opady())
         operacje_na_plikach.dopisanie_do_pliku_sort()
+        operacje_na_plikach.nadpisywanie()
         sleep(900)
             #print(list(operacje_na_plikach.odczyt_danych_z_kolumn(0)))
 
