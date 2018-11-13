@@ -36,7 +36,6 @@ class Pozyskiwane_dane():
             temp='Brak danych'
             return temp
 
-
     def aktualne_opady(self):
         try:
             opady=self.re.search(r"WARUNKI[.]+.([\w.]*.[\w?.]*.[\w?.]*.[\w?.]*.[\w?.]*.[\w?.]*)",self.przeszukiwana_strona()).group(1)
@@ -301,21 +300,61 @@ class Operacje_na_plikach(object):
         for wiersz in range(start, finish):
             yield zakres[wiersz]
 
-#----------------------------------D4.KONTENER-----------------------------------------------------
+#---------------------------------Przetwarzanie danych --------------------------------------------
+class Przetwarzanie_danych(object):
+
+    def __init__(self):
+        self.dane = list(operacje_na_plikach.odczyt_danych_z_wierszy(1))
+
+        # wyszukuje dane temepratury dla calej kolumny Temperatura
+    def dane_temp(self):
+        for i in range(len(self.dane)):
+            yield self.dane[i]['TEMPERATURA']
+
+        # podmienia pozycje 'Brak danych' i '' na pozycje wstecz typu int
+    def tymczasowe_dane_podmienione_na_liczby(self):
+        dane_podmienione = list(self.dane_temp())
+        for poz_pusta in range(0,len(dane_podmienione)):
+            if dane_podmienione[poz_pusta] == 'Brak danych' or dane_podmienione[poz_pusta] == '':
+                dane_podmienione[poz_pusta] = dane_podmienione[poz_pusta-1]
+        yield dane_podmienione
+
+    def srednia_art_temp_calodobowa(self):
+        poz_start = 0
+        poz_finish = 24
+        godz = 0
+        dane_podmienione=list(self.tymczasowe_dane_podmienione_na_liczby())
+        dane_miesiac_temp = [int(dane_podmienione[0][i]) for i in range(len(self.dane)) if self.dane[i]['DATA'] == '2018-11-07']
+        while poz_finish <= len(dane_miesiac_temp):
+            dane_6_godzine = [dane_miesiac_temp[data_w_mc] for data_w_mc in range(poz_start, poz_finish)]
+            srednia_art_6_godzinna = sum(dane_6_godzine) / len(dane_6_godzine)
+            print('Średnia temperaura od godz: ' + str(godz) + ' do godz ' + str(godz + 6) + \
+                  ' wynosi: ' + str(round(srednia_art_6_godzinna, 2)))
+            poz_start += 24
+            poz_finish += 24
+            godz += 6
+        srednia_art_calo_dniowa=sum(dane_miesiac_temp) / len(dane_miesiac_temp)
+        print('Średnia temperatura dla 2018-11-07 wynosi: '+ str(round(srednia_art_calo_dniowa, 2)))
+
+
+#----------------------------------D5.KONTENER-----------------------------------------------------
 
 from time import sleep
 
 #wprowadź date do pozyskania danych archiwalnych
-dzien = '09'
+dzien = '10'
 miesiac = '11'
 rok = '2018'
 
-def main():
-    pozyskiwane_dane = Pozyskiwane_dane()
-    operacje_na_plikach = Operacje_na_plikach()
+pozyskiwane_dane = Pozyskiwane_dane()
+operacje_na_plikach = Operacje_na_plikach()
+przetwarzanie_danych=Przetwarzanie_danych()
 
+def main():
 # reset plik sort
     #operacje_na_plikach.reset_plik_sort_czyszczenie_zawartosci()
+# Średnia temperatura
+    #przetwarzanie_danych.srednia_art_temp_calodobowa()
 
     while True:
         #wyświetla utualną temoeraturę i opady co 15min
