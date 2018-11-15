@@ -301,51 +301,141 @@ class Operacje_na_plikach(object):
             yield zakres[wiersz]
 
 #---------------------------------Przetwarzanie danych --------------------------------------------
+
 class Przetwarzanie_danych(object):
+
+    # ----------------------------Wspólne -----------------------------------------------------
 
     def __init__(self):
         self.dane = list(operacje_na_plikach.odczyt_danych_z_wierszy(1))
+        # ilość dni w miesiącu 1-31
+        self.zbior_dni_w_mc=['0'+str(i) for i in range(1,10)]+[str(y) for y in range(10,32)]
+        # ilość misieęcy w roku
+        self.zbior_mc_typu_int=[str(i) for i in range(1,13)]
+        # lata
+        self.zbior_lat = [str(i) for i in range(1, 2100)]
 
         # wyszukuje dane temepratury dla calej kolumny Temperatura
-    def dane_temp(self):
+    def dane_temp_opad(self,wariant_z_kolumn_TEMPERATURA_or_OPAD):
         for i in range(len(self.dane)):
-            yield self.dane[i]['TEMPERATURA']
+            yield self.dane[i][wariant_z_kolumn_TEMPERATURA_or_OPAD]
 
-        # podmienia pozycje 'Brak danych' i '' na pozycje wstecz typu int
-    def tymczasowe_dane_podmienione_na_liczby(self):
-        dane_podmienione = list(self.dane_temp())
-        for poz_pusta in range(0,len(dane_podmienione)):
+    # podmienia pozycje 'Brak danych' i '' na poz wyżej
+    def tymczasowe_dane_podmienione_temperatura_opad(self, wariant_z_kolumn_TEMPERATURA_or_OPAD):
+        dane_podmienione = list(self.dane_temp_opad(wariant_z_kolumn_TEMPERATURA_or_OPAD))
+        for poz_pusta in range(0, len(dane_podmienione)):
             if dane_podmienione[poz_pusta] == 'Brak danych' or dane_podmienione[poz_pusta] == '':
-                dane_podmienione[poz_pusta] = dane_podmienione[poz_pusta-1]
+                dane_podmienione[poz_pusta] = dane_podmienione[poz_pusta - 1]
         yield dane_podmienione
+
+    #----------------------------Temperaura -----------------------------------------------------
 
     def srednia_art_temp_calodobowa(self):
         poz_start = 0
         poz_finish = 24
         godz = 0
-        dane_podmienione=list(self.tymczasowe_dane_podmienione_na_liczby())
-        dane_miesiac_temp = [int(dane_podmienione[0][i]) for i in range(len(self.dane)) if self.dane[i]['DATA'] == '2018-11-07']
+        dane_podmienione=list(self.tymczasowe_dane_podmienione_temperatura_opad('TEMPERATURA'))
+        dane_miesiac_temp = [int(dane_podmienione[0][i]) for i in range(len(self.dane))\
+                             if self.dane[i]['DATA'] == '{year}-{mc}-{day}'.format(year=rok_spr,mc=miesiac_spr,day=dzien_spr)]
         while poz_finish <= len(dane_miesiac_temp):
             dane_6_godzine = [dane_miesiac_temp[data_w_mc] for data_w_mc in range(poz_start, poz_finish)]
             srednia_art_6_godzinna = sum(dane_6_godzine) / len(dane_6_godzine)
             print('Średnia temperaura od godz: ' + str(godz) + ' do godz ' + str(godz + 6) + \
-                  ' wynosi: ' + str(round(srednia_art_6_godzinna, 2)))
+                  ' wynosi: ' + str(round(srednia_art_6_godzinna, 2))+' C')
             poz_start += 24
             poz_finish += 24
             godz += 6
         srednia_art_calo_dniowa=sum(dane_miesiac_temp) / len(dane_miesiac_temp)
-        print('Średnia temperatura dla 2018-11-07 wynosi: '+ str(round(srednia_art_calo_dniowa, 2)))
+        print('Średnia temperatura dla {year}-{mc}-{day} wynosi: '.format(year=rok_spr,mc=miesiac_spr,day=dzien_spr)\
+              + str(round(srednia_art_calo_dniowa, 2))+' C')
 
+    def srednia_temp_w_podanym_przedziale(self):
+        kolejny_rok =0
+        kolejny_dzien = 0
+        kolejny_mc=0
+        srednia_art_range = 0
+        # Podany przez użytkownika dzień / miesiąc / rok
+        dzien_range = [self.zbior_dni_w_mc[day] for day in range(data_dzien_pocz - 1, data_dzien_koncowa)]
+        mc_range = [self.zbior_mc_typu_int[month] for month in range(data_mc_pocz - 1, data_mc_koncowa)]
+        rok_range = [self.zbior_lat[rok] for rok in range(data_rok_pocz - 1, data_rok_koncowa)]
+        # Podmienia dane i mieli
+        dane_podmienione = list(self.tymczasowe_dane_podmienione_temperatura_opad('TEMPERATURA'))
+        while kolejny_rok < len(rok_range):
+            while kolejny_mc < len(mc_range):
+                while kolejny_dzien < len(dzien_range):
+                    dane_miesiac_temp = [int(dane_podmienione[0][i]) for i in range(len(self.dane)) \
+                                         if self.dane[i]['DATA'] == '{year}-{mc}-{day}'.format(year=rok_range[kolejny_rok],
+                                                                                          mc=mc_range[kolejny_mc],
+                                                                                          day=dzien_range[kolejny_dzien])]
+                    srednia_art_dniowa = sum(dane_miesiac_temp) / len(dane_miesiac_temp)
+                    print('Średnia temperatura dla {year}-{mc}-{day} wynosi: '.format(year=rok_range[kolejny_rok],
+                                                                                      mc=mc_range[kolejny_mc],
+                                                                                      day=dzien_range[kolejny_dzien]) \
+                          + str(round(srednia_art_dniowa, 2)) + ' C')
+                    kolejny_dzien += 1
+                    srednia_art_range += srednia_art_dniowa
+                kolejny_mc += 1
+            kolejny_rok += 1
+        print('Średnia temperatura dla podanego przedziału wynosi: ' + str(round(srednia_art_range / kolejny_dzien,2)) + ' C')
+
+    # ----------------------------OPAD -----------------------------------------------------
+    #zbior_deszczy = ['słaby deszcz', 'słaby: deszcz opad przelotny ', 'deszcz ', 'słaby: deszcz ']
+    # zbior należy co jakiś czas zauktualizować
+
+    def deszcz_w_ciagu_dnia(self):
+        poz_start = 0
+        poz_finish = 24
+        godz = 0
+        dane_podmienione = list(self.tymczasowe_dane_podmienione_temperatura_opad('OPAD'))
+        for deszcz in range(0, len(dane_podmienione[0])):
+            if dane_podmienione[0][deszcz] == 'słaby deszcz':
+                dane_podmienione[0][deszcz] = '35'
+            elif dane_podmienione[0][deszcz] == 'słaby: deszcz opad przelotny ':
+                dane_podmienione[0][deszcz] = '18'
+            elif dane_podmienione[0][deszcz] == 'deszcz ':
+                dane_podmienione[0][deszcz] = '55'
+            elif dane_podmienione[0][deszcz] == 'słaby: deszcz ':
+                dane_podmienione[0][deszcz] = '35'
+            else:
+                dane_podmienione[0][deszcz] = '0'
+        dane_miesiac_opad = [int(dane_podmienione[0][i]) for i in range(len(self.dane)) \
+                             if self.dane[i]['DATA'] == '{year}-{mc}-{day}'.format(year=rok_spr, mc=miesiac_spr,day=dzien_spr)]
+        while poz_finish <= len(dane_miesiac_opad):
+            dane_6_godzine = [dane_miesiac_opad[data_w_mc] for data_w_mc in range(poz_start, poz_finish)]
+            srednia_art_6_godzinna = sum(dane_6_godzine) / len(dane_6_godzine)
+            print('Średnia opad od godz: ' + str(godz) + ' do godz ' + str(godz + 6) + \
+                  ' wynosi: ' + str(round(srednia_art_6_godzinna, 2))+' mm/1m^2')
+            poz_start += 24
+            poz_finish += 24
+            godz += 6
+        srednia_art_calo_dniowa = sum(dane_miesiac_opad) / len(dane_miesiac_opad)
+        print('Średnia opad dla {year}-{mc}-{day} wynosi: '.format(year=rok_spr, mc=miesiac_spr, day=dzien_spr) \
+              + str(round(srednia_art_calo_dniowa, 2))+' mm/1m^2')
 
 #----------------------------------D5.KONTENER-----------------------------------------------------
 
 from time import sleep
 
 #wprowadź date do pozyskania danych archiwalnych
-dzien = '10'
+dzien = '13'
 miesiac = '11'
 rok = '2018'
 
+#wprowadź date do pozyskania danych podsumujwujacych calodobowe
+dzien_spr = '13'
+miesiac_spr = '11'
+rok_spr = '2018'
+
+#wprowadź date do pozyskania danych podsumujwujacych w przedziale
+data_dzien_pocz = 5
+data_dzien_koncowa = 8
+data_mc_pocz = 11
+data_mc_koncowa = 11
+data_rok_pocz = 2018
+data_rok_koncowa = 2018
+
+
+#przypisanie klas
 pozyskiwane_dane = Pozyskiwane_dane()
 operacje_na_plikach = Operacje_na_plikach()
 przetwarzanie_danych=Przetwarzanie_danych()
@@ -353,8 +443,19 @@ przetwarzanie_danych=Przetwarzanie_danych()
 def main():
 # reset plik sort
     #operacje_na_plikach.reset_plik_sort_czyszczenie_zawartosci()
-# Średnia temperatura
-    #przetwarzanie_danych.srednia_art_temp_calodobowa()
+
+# Średnia dobowa temperatura
+    #przetwarzanie_danych.srednia_art_temp_calodobowa() #dopisać żeby wcześniej spr. czy tabela z dzień spr jest uzupełniona
+# Itensywność opdaów w ciągu dnia
+    #przetwarzanie_danych.deszcz_w_ciagu_dnia()
+# Średnia temperatura w przedziale
+    przetwarzanie_danych.srednia_temp_w_podanym_przedziale()
+
+#odczyt danych:
+    #operacje_na_plikach.odczyt_danych_z_wierszy()
+    #operacje_na_plikach.zakres_wierszy()
+    #operacje_na_plikach.odczyt_danych_z_kolumn()
+    #operacje_na_plikach.zakres_kolumn()
 
     while True:
         #wyświetla utualną temoeraturę i opady co 15min
