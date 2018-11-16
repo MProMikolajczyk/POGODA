@@ -71,6 +71,7 @@ class Operacje_na_plikach(object):
 
     import csv
     import datetime
+    import re
 
 
     def __init__(self):
@@ -123,17 +124,18 @@ class Operacje_na_plikach(object):
             uzyta_data=set()
         with open(self.pliki[nr_pliku], "a", newline="", encoding='utf-8') as csvfile:
             write = self.csv.DictWriter(csvfile, fieldnames=self.nazwy_kolumn)
-            godz = self.datetime.datetime(int(rok), int(miesiac), int(dzien), 0, 0)
+            godz = self.datetime.datetime(int(rok), int(miesiac), int(dzien), 0, 0) #jeżeli tu zmienimy datatime rok,miesiac i dzien na inny niz w pozycji z while to otrzymamy przedzialowe wprowadzanie danych
             poz = 0
             while godz <= self.datetime.datetime(int(rok), int(miesiac), int(dzien), 23, 59) and poz <= 24:
                 for data_plik_arch in range(len(lines)):
                     uzyta_data.add(lines[data_plik_arch][2])
                 for ID in range(0, 24):
-                    if '{year}-{mc}-{day}'.format(year=rok, mc=miesiac, day=dzien) not in uzyta_data:
+                    if '{year}-{mc}-{day}'.format(year=rok, mc=miesiac, day=dzien) not in uzyta_data: #do przedzialu tu trzeba dodać funkcje
                         write.writerow({"TEMPERATURA": dane_1[poz],
                                          "OPAD": dane_2[poz],
                                          "DATA": godz.strftime('%Y-%m-%d'),
-                                         "CZAS": godz.strftime('%H:%M:%S'), "ID": ID})
+                                         "CZAS": godz.strftime('%H:%M:%S'),
+                                         "ID": ID})
                         godz += self.datetime.timedelta(hours=1)
                         poz += 1
                     else:
@@ -151,7 +153,7 @@ class Operacje_na_plikach(object):
                     write.writeheader()
                 self.dopisanie_do_pliku_sort_append()
             else:
-                self.dopisanie_do_pliku_sort_append()
+                self.dopisanie_do_pliku_sort_append_kolejna_data()
 
     def dopisanie_do_pliku_sort_append(self,nr_pliku=1):
         with open(self.pliki[nr_pliku], 'r') as readfile:
@@ -165,6 +167,35 @@ class Operacje_na_plikach(object):
                                                                self.datetime.time(23, 59, 59)):
                 for data_plik_sort in range(len(lines)):
                     uzyta_data.add(lines[data_plik_sort][2])
+                for ID in range(0, 96):
+                    if self.datetime.datetime.today().strftime('%Y-%m-%d') not in uzyta_data:
+                        write.writerow({"DATA": godz.strftime('%Y-%m-%d'),
+                                        "CZAS": godz.strftime('%H:%M:%S'),
+                                        "ID": ID})
+                        godz += self.datetime.timedelta(minutes=15)
+                    else:
+                        return readfile
+
+    def dopisanie_do_pliku_sort_append_kolejna_data(self,nr_pliku=1):
+        with open(self.pliki[nr_pliku], 'r') as readfile:
+            reader = self.csv.reader(readfile)
+            lines = list(reader)
+            uzyta_data = set()
+        with open(self.pliki[nr_pliku], "a", newline="", encoding='utf-8') as csvfile:
+            write = self.csv.DictWriter(csvfile, fieldnames=self.nazwy_kolumn)
+            for data_plik_sort in range(1,len(lines)):
+                uzyta_data.add(lines[data_plik_sort][2])
+            uzyte_pojedyncze_daty = list(uzyta_data)
+            uzyte_pojedyncze_daty.sort()
+            max_dzien_z_uzyte_pojedyncze_daty = int(self.re.search(r'(\d*).(\d*).(\d*)', max(uzyte_pojedyncze_daty)).group(3))
+            max_miesiac_z_uzyte_pojedyncze_daty = int(self.re.search(r'(\d*).(\d*).(\d*)', max(uzyte_pojedyncze_daty)).group(2))
+            max_rok_z_uzyte_pojedyncze_daty = int(self.re.search(r'(\d*).(\d*).(\d*)', max(uzyte_pojedyncze_daty)).group(1))
+            godz = self.datetime.datetime(max_rok_z_uzyte_pojedyncze_daty,
+                                          max_miesiac_z_uzyte_pojedyncze_daty,
+                                          max_dzien_z_uzyte_pojedyncze_daty,
+                                          0, 0) + self.datetime.timedelta(days=1)
+            while godz <= self.datetime.datetime.now().combine(self.datetime.datetime.today().date(),
+                                                               self.datetime.time(23, 59, 59)):
                 for ID in range(0, 96):
                     if self.datetime.datetime.today().strftime('%Y-%m-%d') not in uzyta_data:
                         write.writerow({"DATA": godz.strftime('%Y-%m-%d'),
@@ -310,9 +341,9 @@ class Przetwarzanie_danych(object):
         self.dane = list(operacje_na_plikach.odczyt_danych_z_wierszy(1))
         # ilość dni w miesiącu 1-31
         self.zbior_dni_w_mc=['0'+str(i) for i in range(1,10)]+[str(y) for y in range(10,32)]
-        # ilość misieęcy w roku
+        # ilość misięcy w roku
         self.zbior_mc_typu_int=[str(i) for i in range(1,13)]
-        # lata
+        # ilość lat
         self.zbior_lat = [str(i) for i in range(1, 2100)]
 
         # wyszukuje dane temepratury dla calej kolumny Temperatura
@@ -350,9 +381,9 @@ class Przetwarzanie_danych(object):
               + str(round(srednia_art_calo_dniowa, 2))+' C')
 
     def srednia_temp_w_podanym_przedziale(self):
-        kolejny_rok =0
         kolejny_dzien = 0
-        kolejny_mc=0
+        kolejny_mc = 0
+        kolejny_rok = 0
         srednia_art_range = 0
         # Podany przez użytkownika dzień / miesiąc / rok
         dzien_range = [self.zbior_dni_w_mc[day] for day in range(data_dzien_pocz - 1, data_dzien_koncowa)]
@@ -408,10 +439,49 @@ class Przetwarzanie_danych(object):
             poz_start += 24
             poz_finish += 24
             godz += 6
-        srednia_art_calo_dniowa = sum(dane_miesiac_opad) / len(dane_miesiac_opad)
+        srednia_art_calo_dniowa = sum(dane_miesiac_opad) / 24
         print('Średnia opad dla {year}-{mc}-{day} wynosi: '.format(year=rok_spr, mc=miesiac_spr, day=dzien_spr) \
               + str(round(srednia_art_calo_dniowa, 2))+' mm/1m^2')
 
+    def deszcz_w_podanym_przedziale(self):
+        kolejny_dzien = 0
+        kolejny_mc = 0
+        kolejny_rok = 0
+        srednia_art_range = 0
+        # Podany przez użytkownika dzień / miesiąc / rok
+        dzien_range = [self.zbior_dni_w_mc[day] for day in range(data_dzien_pocz - 1, data_dzien_koncowa)]
+        mc_range = [self.zbior_mc_typu_int[month] for month in range(data_mc_pocz - 1, data_mc_koncowa)]
+        rok_range = [self.zbior_lat[rok] for rok in range(data_rok_pocz - 1, data_rok_koncowa)]
+        # Podmienia dane i mieli
+        dane_podmienione = list(self.tymczasowe_dane_podmienione_temperatura_opad('OPAD'))
+        for deszcz in range(0, len(dane_podmienione[0])):
+            if dane_podmienione[0][deszcz] == 'słaby deszcz':
+                dane_podmienione[0][deszcz] = '35'
+            elif dane_podmienione[0][deszcz] == 'słaby: deszcz opad przelotny ':
+                dane_podmienione[0][deszcz] = '18'
+            elif dane_podmienione[0][deszcz] == 'deszcz ':
+                dane_podmienione[0][deszcz] = '55'
+            elif dane_podmienione[0][deszcz] == 'słaby: deszcz ':
+                dane_podmienione[0][deszcz] = '35'
+            else:
+                dane_podmienione[0][deszcz] = '0'
+        while kolejny_rok < len(rok_range):
+            while kolejny_mc < len(mc_range):
+                while kolejny_dzien < len(dzien_range):
+                    dane_miesiac_opad = [int(dane_podmienione[0][i]) for i in range(len(self.dane)) \
+                                         if self.dane[i]['DATA'] == '{year}-{mc}-{day}'.format(year=rok_range[kolejny_rok],
+                                                                                          mc=mc_range[kolejny_mc],
+                                                                                          day=dzien_range[kolejny_dzien])]
+                    srednia_art_dniowa = sum(dane_miesiac_opad) / 24
+                    print('Średni opad dla {year}-{mc}-{day} wynosi: '.format(year=rok_range[kolejny_rok],
+                                                                                      mc=mc_range[kolejny_mc],
+                                                                                      day=dzien_range[kolejny_dzien]) \
+                          + str(round(srednia_art_dniowa, 2)) + ' mm/m2')
+                    kolejny_dzien += 1
+                    srednia_art_range += srednia_art_dniowa
+                kolejny_mc += 1
+            kolejny_rok += 1
+        print('Sumaryczny opad dla podanego przedziału wynosi: ' + str(round(srednia_art_range, 2)) + ' mm/m^2')
 #----------------------------------D5.KONTENER-----------------------------------------------------
 
 from time import sleep
@@ -422,7 +492,7 @@ miesiac = '11'
 rok = '2018'
 
 #wprowadź date do pozyskania danych podsumujwujacych calodobowe
-dzien_spr = '13'
+dzien_spr = '05'
 miesiac_spr = '11'
 rok_spr = '2018'
 
@@ -449,7 +519,9 @@ def main():
 # Itensywność opdaów w ciągu dnia
     #przetwarzanie_danych.deszcz_w_ciagu_dnia()
 # Średnia temperatura w przedziale
-    przetwarzanie_danych.srednia_temp_w_podanym_przedziale()
+    #przetwarzanie_danych.srednia_temp_w_podanym_przedziale()
+# Średnia temperatura w przedziale
+    przetwarzanie_danych.deszcz_w_podanym_przedziale()
 
 #odczyt danych:
     #operacje_na_plikach.odczyt_danych_z_wierszy()
