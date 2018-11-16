@@ -470,9 +470,14 @@ class Przetwarzanie_danych(object):
         poz_start = 0
         poz_finish = 24
         godz = 0
+        dzien_range = [self.zbior_dni_w_mc[day] for day in range(dzien_spr - 1, dzien_spr)]
+        mc_range = [self.zbior_mc_typu_int[month] for month in range(data_mc_pocz - 1, data_mc_koncowa)]
+        rok_range = [self.zbior_lat[rok] for rok in range(data_rok_pocz - 1, data_rok_koncowa)]
         dane_podmienione=list(self.tymczasowe_dane_podmienione_temperatura_opad('TEMPERATURA'))
         dane_miesiac_temp = [int(dane_podmienione[0][i]) for i in range(len(self.dane))\
-                             if self.dane[i]['DATA'] == '{year}-{mc}-{day}'.format(year=rok_spr,mc=miesiac_spr,day=dzien_spr)]
+                             if self.dane[i]['DATA'] == '{year}-{mc}-{day}'.format(year=rok_range[0],
+                                                                                          mc=mc_range[0],
+                                                                                          day=dzien_range[0])]
         while poz_finish <= len(dane_miesiac_temp):
             dane_6_godzine = [dane_miesiac_temp[data_w_mc] for data_w_mc in range(poz_start, poz_finish)]
             srednia_art_6_godzinna = sum(dane_6_godzine) / len(dane_6_godzine)
@@ -482,7 +487,9 @@ class Przetwarzanie_danych(object):
             poz_finish += 24
             godz += 6
         srednia_art_calo_dniowa=sum(dane_miesiac_temp) / len(dane_miesiac_temp)
-        print('Średnia temperatura dla {year}-{mc}-{day} wynosi: '.format(year=rok_spr,mc=miesiac_spr,day=dzien_spr)\
+        print('Średnia temperatura dla {year}-{mc}-{day} wynosi: '.format(year=rok_range[0],
+                                                                                          mc=mc_range[0],
+                                                                                          day=dzien_range[0])\
               + str(round(srednia_art_calo_dniowa, 2))+' C')
 
     def srednia_temp_w_podanym_przedziale(self):
@@ -522,7 +529,7 @@ class Przetwarzanie_danych(object):
         poz_start = 0
         poz_finish = 24
         godz = 0
-        dzien_range = [self.zbior_dni_w_mc[day] for day in range(data_dzien_pocz - 1, data_dzien_koncowa)]
+        dzien_range = [self.zbior_dni_w_mc[day] for day in range(dzien_spr - 1, dzien_spr)]
         mc_range = [self.zbior_mc_typu_int[month] for month in range(data_mc_pocz - 1, data_mc_koncowa)]
         rok_range = [self.zbior_lat[rok] for rok in range(data_rok_pocz - 1, data_rok_koncowa)]
         dane_podmienione = list(self.tymczasowe_dane_podmienione_temperatura_opad('OPAD'))
@@ -538,9 +545,9 @@ class Przetwarzanie_danych(object):
             else:
                 dane_podmienione[0][deszcz] = '0'
         dane_miesiac_opad = [int(dane_podmienione[0][i]) for i in range(len(self.dane)) \
-                             if self.dane[i]['DATA'] == '{year}-{mc}-{day}'.format(year=rok_range[rok_spr],
-                                                                                          mc=mc_range[miesiac_spr],
-                                                                                          day=dzien_range[dzien_spr])]
+                             if self.dane[i]['DATA'] == '{year}-{mc}-{day}'.format(year=rok_range[0],
+                                                                                          mc=mc_range[0],
+                                                                                          day=dzien_range[0])]
         while poz_finish <= len(dane_miesiac_opad):
             dane_6_godzine = [dane_miesiac_opad[data_w_mc] for data_w_mc in range(poz_start, poz_finish)]
             srednia_art_6_godzinna = sum(dane_6_godzine) / len(dane_6_godzine)
@@ -550,9 +557,9 @@ class Przetwarzanie_danych(object):
             poz_finish += 24
             godz += 6
         srednia_art_calo_dniowa = sum(dane_miesiac_opad) / 24
-        print('Średnia opad dla {year}-{mc}-{day} wynosi: '.format(year=rok_range[rok_spr],
-                                                                   mc=mc_range[miesiac_spr],
-                                                                   day=dzien_range[dzien_spr]) \
+        print('Średnia opad dla {year}-{mc}-{day} wynosi: '.format(year=rok_range[0],
+                                                                   mc=mc_range[0],
+                                                                   day=dzien_range[0]) \
               + str(round(srednia_art_calo_dniowa, 2))+' mm/1m^2')
 
     def deszcz_w_podanym_przedziale(self):
@@ -598,12 +605,12 @@ class Przetwarzanie_danych(object):
 
 from time import sleep
 
-#daty do pozyskania danych archiwalnych
+#------------daty do pozyskania danych archiwalnych---------------------------------------------------
 dzien = Operacje_na_plikach().dzien_pozyskiwanie_danych_plik_log_archiwalny()
 miesiac = Operacje_na_plikach().miesiac_pozyskiwanie_danych_plik_log_archiwalny()
 rok = Operacje_na_plikach().rok_pozyskiwanie_danych_plik_log_archiwalny()
 
-#wprowadź daty do pozyskania danych archiwalnych ręcznie jakby automat nie działał
+#------------wprowadź daty do pozyskania danych archiwalnych ręcznie jakby automat nie działał---------
 dzien_recznie='15' #od 1 do 9 nalezy prowadzić przed liczbą 0
 miesiac_recznie = '11'
 rok_recznie = '2018'
@@ -611,66 +618,88 @@ rok_recznie = '2018'
 #miesiac=miesiac_recznie
 #rok=rok_recznie
 
-#wprowadź date do pozyskania danych podsumujwujacych calodobowe
-dzien_spr = 5
-miesiac_spr = 11
-rok_spr = 2018
 
-#wprowadź date do pozyskania danych podsumujwujacych w przedziale
+#-----------------wprowadź date do pozyskania danych podsumujwujacych w przedziale--------------------------
 data_dzien_pocz = 5
-data_dzien_koncowa = 10
+data_dzien_koncowa = 5
 data_mc_pocz = 11
 data_mc_koncowa = 11
 data_rok_pocz = 2018
 data_rok_koncowa = 2018
 
 
-#przypisanie klas
+#---------------------------przypisanie klas--------------------
 pozyskiwane_dane = Pozyskiwane_dane()
 operacje_na_plikach = Operacje_na_plikach()
 przetwarzanie_danych=Przetwarzanie_danych()
 
-def main():
+
 # reset plik sort
     #operacje_na_plikach.reset_plik_sort_czyszczenie_zawartosci()
 
-# Średnia dobowa temperatura
-    #przetwarzanie_danych.srednia_art_temp_calodobowa() #dopisać żeby wcześniej spr. czy tabela z dzień spr jest uzupełniona
-# Itensywność opdaów w ciągu dnia
-    #przetwarzanie_danych.deszcz_w_ciagu_dnia()
+
+
 # Średnia temperatura w przedziale
     #przetwarzanie_danych.srednia_temp_w_podanym_przedziale()
 # Średni opad w przedziale
-    przetwarzanie_danych.deszcz_w_podanym_przedziale()
+    #przetwarzanie_danych.deszcz_w_podanym_przedziale()
 
 #odczyt danych:
     #operacje_na_plikach.odczyt_danych_z_wierszy()
     #operacje_na_plikach.zakres_wierszy()
     #operacje_na_plikach.odczyt_danych_z_kolumn()
     #operacje_na_plikach.zakres_kolumn()
-    while True:
-        #wyświetla utualną temoeraturę i opady co 15min
-        print(pozyskiwane_dane.akutualna_temp())
-        print(pozyskiwane_dane.aktualne_opady())
+while True:
+    print('Poczekaj do 5')
+    operacje_na_plikach.dopisanie_do_pliku_log(pozyskiwane_dane.akutualna_temp(),pozyskiwane_dane.aktualne_opady())
+    print('1')
+    operacje_na_plikach.dopisanie_do_pliku_log_archiwalny(pozyskiwane_dane.temeratura_archiwalna(), pozyskiwane_dane.opad_archiwalny())
+    print('2')
+    operacje_na_plikach.dopisanie_do_pliku_sort()
+    print('3')
+    try:
+        operacje_na_plikach.nadpisywanie_aktualnym_danymi_plik_sort()
+        print("4a")
+    except:
+        operacje_na_plikach.nadpisywanie_aktualnym_danymi_plik_sort_calosc()
+        print("4b")
+    try:
+        operacje_na_plikach.nadpisywanie_archiwum_plik_sort()
+        print("5a")
+    except:
+        operacje_na_plikach.nadpisywanie_archiwum_plik_sort_calosc()
+        print("5b")
 
-        operacje_na_plikach.dopisanie_do_pliku_log(pozyskiwane_dane.akutualna_temp(),pozyskiwane_dane.aktualne_opady())
-        print('1')
-        operacje_na_plikach.dopisanie_do_pliku_log_archiwalny(pozyskiwane_dane.temeratura_archiwalna(), pozyskiwane_dane.opad_archiwalny())
-        print('2')
-        operacje_na_plikach.dopisanie_do_pliku_sort()
-        print('3')
-        try:
-            operacje_na_plikach.nadpisywanie_aktualnym_danymi_plik_sort()
-            print("4a")
-        except:
-            operacje_na_plikach.nadpisywanie_aktualnym_danymi_plik_sort_calosc()
-            print("4b")
-        try:
-            operacje_na_plikach.nadpisywanie_archiwum_plik_sort()
-            print("5a")
-        except:
-            operacje_na_plikach.nadpisywanie_archiwum_plik_sort_calosc()
-            print("5b")
-        sleep(900)
-            #print(list(operacje_na_plikach.odczyt_danych_z_kolumn(0)))
-main()
+    print('\n'*50)
+
+    #wyświetla utualną temoeraturę i opady co 15min
+    print('Aktualna temperatuta wynosi: ' + str(pozyskiwane_dane.akutualna_temp()) + ' C')
+    print('Aktualne warunki atmosferyczne: ' + str(pozyskiwane_dane.aktualne_opady()))
+    print('\nWpisz żeby uzusykać: ')
+    print('\nInformacje dniowe: sd ')
+    wybor_panel_glowny = input().lower()
+    if wybor_panel_glowny == 'sd':
+        print('\nWpisz: ')
+        print('\nŚrednia dobowa temperatura wpisz: std: ')
+        print('Itensywność opdaów w ciągu dnia wpisz: io ')
+        Informacje_dniowe = input().lower()
+        if Informacje_dniowe == 'std':
+            print('\n Wybrałeś srednią dobową temperaturę')
+            print('Podaj dzien: ')
+            dzien_spr = int(input())
+            print('Podaj miesiac: ')
+            miesiac_spr = int(input())
+            print('Podaj rok: ')
+            rok_spr = int(input())
+            przetwarzanie_danych.srednia_art_temp_calodobowa()
+        elif Informacje_dniowe == 'io':
+            print('\n Wybrałeś itensywność opdaów w ciągu dnia')
+            print('Podaj dzien: ')
+            dzien_spr = int(input())
+            print('Podaj miesiac: ')
+            miesiac_spr = int(input())
+            print('Podaj rok: ')
+            rok_spr = int(input())
+            przetwarzanie_danych.deszcz_w_ciagu_dnia()
+    sleep(900)
+
