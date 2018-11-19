@@ -13,10 +13,10 @@ class Pozyskiwane_dane():
 
     def __init__(self):
         self.strona_n1 = {'http://pruszkow.infometeo.pl':'/html/body/div/pre/text()'}
-        self.strona_n2 = {'https://pogoda.interia.pl/archiwum-pogody-{day}-{mc}-{year},cId,27670'.format(day=dzien, mc=miesiac, year=rok): \
-                              '/html/body/div/div/div/section/div/div/div/div/div/div/span/span/text()'}
-        self.strona_n3 = {'https://pogoda.interia.pl/archiwum-pogody-{day}-{mc}-{year},cId,27670'.format(day=dzien, mc=miesiac, year=rok): \
-                              '/html/body/div/div/div/section/div/div/div/div/div/div/text()'}
+        self.strona_n2 = {'https://pogoda.interia.pl/archiwum-pogody-{day}-{mc}-{year},cId,27670'.format(day=Daty.dzien, mc=Daty.miesiac, year=Daty.rok): \
+                                  '/html/body/div/div/div/section/div/div/div/div/div/div/span/span/text()'}
+        self.strona_n3 = {'https://pogoda.interia.pl/archiwum-pogody-{day}-{mc}-{year},cId,27670'.format(day=Daty.dzien, mc=Daty.miesiac, year=Daty.rok): \
+                                  '/html/body/div/div/div/section/div/div/div/div/div/div/text()'}
         self.nr_strony = [self.strona_n1, self.strona_n2,self.strona_n3]
 
     #----------------------------Wariant_1-------------------------------------
@@ -30,7 +30,7 @@ class Pozyskiwane_dane():
 
     def akutualna_temp(self):
         try:
-            temp=self.re.search(r"TEMPERATURA.+\b([0-9][0-9]?)",self.przeszukiwana_strona()).group(1)
+            temp=self.re.search(r"TEMPERATURA.+\b(.?[0-9][0-9]?)",self.przeszukiwana_strona()).group(1)
             return temp
         except:
             temp='Brak danych'
@@ -48,7 +48,7 @@ class Pozyskiwane_dane():
 
     def temeratura_archiwalna(self):
         try:
-            temp_arch = self.re.findall(r"[0-9]°COdczuwalna.([0-9][0-9]?)", self.przeszukiwana_strona(1))
+            temp_arch = self.re.findall(r".?[0-9]°COdczuwalna.(.?[0-9][0-9]?)", self.przeszukiwana_strona(1))
             return temp_arch
         except:
             temp_arch='Brak'
@@ -56,8 +56,8 @@ class Pozyskiwane_dane():
 
     def opad_archiwalny(self):
         try:
-            opad_arch = self.re.findall(r"[0-9][0-9]?°COdczuwalna.[0-9][0-9]?°C.([A-Z][a-zżźćńółęąś]*\s?[a-zżźćńółęąś?]*)[\w]*",self.przeszukiwana_strona(1))
-            wilgotnosc_arch = self.re.findall(r"([0-9][0-9])", self.przeszukiwana_strona(2))
+            opad_arch = self.re.findall(r".?[0-9][0-9]?°COdczuwalna..?[0-9][0-9]?°C.([A-Z][a-zżźćńółęąś]*\s?[a-zżźćńółęąś?]*)[\w]*",self.przeszukiwana_strona(1))
+            wilgotnosc_arch = self.re.findall(r"(.?[0-9][0-9])", self.przeszukiwana_strona(2))
             for nr_poz in range(len(opad_arch)):
                 if opad_arch[nr_poz] == 'Zachmurzenie duże' and wilgotnosc_arch[nr_poz] >= '98':
                     opad_arch[nr_poz] = "słaby deszcz"
@@ -166,13 +166,13 @@ class Operacje_na_plikach(object):
             write = self.csv.DictWriter(csvfile, fieldnames=self.nazwy_kolumn)
             for data_plik_sort in range(1,len(lines)):
                 uzyta_data.add(lines[data_plik_sort][2])
-            godz = self.datetime.datetime(int(rok), int(miesiac), int(dzien), 0, 0)
+            godz = self.datetime.datetime(int(Daty.rok), int(Daty.miesiac), int(Daty.dzien), 0, 0)
             poz = 0
-            while godz <= self.datetime.datetime(int(rok_recznie), int(miesiac_recznie), int(dzien_recznie), 23, 59) and poz <= 24:
+            while godz <= self.datetime.datetime(int(Daty.rok_recznie), int(Daty.miesiac_recznie), int(Daty.dzien_recznie), 23, 59) and poz <= 24:
                 for data_plik_arch in range(len(lines)):
                     uzyta_data.add(lines[data_plik_arch][2])
                 for ID in range(0, 24):
-                    if '{year}-{mc}-{day}'.format(year=rok, mc=miesiac, day=dzien) not in uzyta_data:
+                    if '{year}-{mc}-{day}'.format(year=Daty.rok, mc=Daty.miesiac, day=Daty.dzien) not in uzyta_data:
                         write.writerow({"TEMPERATURA": dane_1[poz],
                                          "OPAD": dane_2[poz],
                                          "DATA": godz.strftime('%Y-%m-%d'),
@@ -202,7 +202,7 @@ class Operacje_na_plikach(object):
                                      max_dzien_z_uzyte_pojedyncze_daty,
                                      0, 0) + self.datetime.timedelta(days=1)
             dzien_globalny = godz.strftime('%d')
-        return dzien_globalny
+            return dzien_globalny
 
     def miesiac_pozyskiwanie_danych_plik_log_archiwalny(self,nr_pliku=2):
         with open(self.pliki[nr_pliku], 'r') as readfile:
@@ -213,17 +213,15 @@ class Operacje_na_plikach(object):
                 uzyta_data.add(lines[data_plik_sort][2])
             uzyte_pojedyncze_daty = list(uzyta_data)
             uzyte_pojedyncze_daty.sort()
-            max_dzien_z_uzyte_pojedyncze_daty = int(
-                self.re.search(r'(\d*).(\d*).(\d*)', max(uzyte_pojedyncze_daty)).group(3))
-            max_miesiac_z_uzyte_pojedyncze_daty = int(
-                self.re.search(r'(\d*).(\d*).(\d*)', max(uzyte_pojedyncze_daty)).group(2))
+            max_dzien_z_uzyte_pojedyncze_daty = int(self.re.search(r'(\d*).(\d*).(\d*)', max(uzyte_pojedyncze_daty)).group(3))
+            max_miesiac_z_uzyte_pojedyncze_daty = int(self.re.search(r'(\d*).(\d*).(\d*)', max(uzyte_pojedyncze_daty)).group(2))
             max_rok_z_uzyte_pojedyncze_daty = int(self.re.search(r'(\d*).(\d*).(\d*)', max(uzyte_pojedyncze_daty)).group(1))
             godz = self.datetime.datetime(max_rok_z_uzyte_pojedyncze_daty,
                                      max_miesiac_z_uzyte_pojedyncze_daty,
                                      max_dzien_z_uzyte_pojedyncze_daty,
                                      0, 0) + self.datetime.timedelta(days=1)
-            miesiac_globalny = godz.strftime('%d')
-        return miesiac_globalny
+            miesiac_globalny = godz.strftime('%m')
+            return miesiac_globalny
 
     def rok_pozyskiwanie_danych_plik_log_archiwalny(self,nr_pliku=2):
         with open(self.pliki[nr_pliku], 'r') as readfile:
@@ -243,7 +241,7 @@ class Operacje_na_plikach(object):
                                      max_miesiac_z_uzyte_pojedyncze_daty,
                                      max_dzien_z_uzyte_pojedyncze_daty,
                                      0, 0) + self.datetime.timedelta(days=1)
-            rok_globalny = godz.strftime('%d')
+            rok_globalny = godz.strftime('%Y')
         return rok_globalny
 
     # ---------------------plik sort------------------------------------------------
@@ -471,8 +469,8 @@ class Przetwarzanie_danych(object):
         poz_finish = 24
         godz = 0
         dzien_range = [self.zbior_dni_w_mc[day] for day in range(dzien_spr - 1, dzien_spr)]
-        mc_range = [self.zbior_mc_typu_int[month] for month in range(data_mc_pocz - 1, data_mc_koncowa)]
-        rok_range = [self.zbior_lat[rok] for rok in range(data_rok_pocz - 1, data_rok_koncowa)]
+        mc_range = [self.zbior_mc_typu_int[month] for month in range(Daty.data_mc_pocz - 1, Daty.data_mc_koncowa)]
+        rok_range = [self.zbior_lat[rok] for rok in range(Daty.data_rok_pocz - 1, Daty.data_rok_koncowa)]
         dane_podmienione=list(self.tymczasowe_dane_podmienione_temperatura_opad('TEMPERATURA'))
         dane_miesiac_temp = [int(dane_podmienione[0][i]) for i in range(len(self.dane))\
                              if self.dane[i]['DATA'] == '{year}-{mc}-{day}'.format(year=rok_range[0],
@@ -498,9 +496,9 @@ class Przetwarzanie_danych(object):
         kolejny_rok = 0
         srednia_art_range = 0
         # Podany przez użytkownika dzień / miesiąc / rok
-        dzien_range = [self.zbior_dni_w_mc[day] for day in range(data_dzien_pocz - 1, data_dzien_koncowa)]
-        mc_range = [self.zbior_mc_typu_int[month] for month in range(data_mc_pocz - 1, data_mc_koncowa)]
-        rok_range = [self.zbior_lat[rok] for rok in range(data_rok_pocz - 1, data_rok_koncowa)]
+        dzien_range = [self.zbior_dni_w_mc[day] for day in range(Daty.data_dzien_pocz - 1, Daty.data_dzien_koncowa)]
+        mc_range = [self.zbior_mc_typu_int[month] for month in range(Daty.data_mc_pocz - 1, Daty.data_mc_koncowa)]
+        rok_range = [self.zbior_lat[rok] for rok in range(Daty.data_rok_pocz - 1, Daty.data_rok_koncowa)]
         # Podmienia dane i mieli
         dane_podmienione = list(self.tymczasowe_dane_podmienione_temperatura_opad('TEMPERATURA'))
         while kolejny_rok < len(rok_range):
@@ -530,8 +528,8 @@ class Przetwarzanie_danych(object):
         poz_finish = 24
         godz = 0
         dzien_range = [self.zbior_dni_w_mc[day] for day in range(dzien_spr - 1, dzien_spr)]
-        mc_range = [self.zbior_mc_typu_int[month] for month in range(data_mc_pocz - 1, data_mc_koncowa)]
-        rok_range = [self.zbior_lat[rok] for rok in range(data_rok_pocz - 1, data_rok_koncowa)]
+        mc_range = [self.zbior_mc_typu_int[month] for month in range(Daty.data_mc_pocz - 1, Daty.data_mc_koncowa)]
+        rok_range = [self.zbior_lat[rok] for rok in range(Daty.data_rok_pocz - 1, Daty.data_rok_koncowa)]
         dane_podmienione = list(self.tymczasowe_dane_podmienione_temperatura_opad('OPAD'))
         for deszcz in range(0, len(dane_podmienione[0])):
             if dane_podmienione[0][deszcz] == 'słaby deszcz':
@@ -568,9 +566,9 @@ class Przetwarzanie_danych(object):
         kolejny_rok = 0
         srednia_art_range = 0
         # Podany przez użytkownika dzień / miesiąc / rok
-        dzien_range = [self.zbior_dni_w_mc[day] for day in range(data_dzien_pocz - 1, data_dzien_koncowa)]
-        mc_range = [self.zbior_mc_typu_int[month] for month in range(data_mc_pocz - 1, data_mc_koncowa)]
-        rok_range = [self.zbior_lat[rok] for rok in range(data_rok_pocz - 1, data_rok_koncowa)]
+        dzien_range = [self.zbior_dni_w_mc[day] for day in range(Daty.data_dzien_pocz - 1, Daty.data_dzien_koncowa)]
+        mc_range = [self.zbior_mc_typu_int[month] for month in range(Daty.data_mc_pocz - 1, Daty.data_mc_koncowa)]
+        rok_range = [self.zbior_lat[rok] for rok in range(Daty.data_rok_pocz - 1, Daty.data_rok_koncowa)]
         # Podmienia dane i mieli
         dane_podmienione = list(self.tymczasowe_dane_podmienione_temperatura_opad('OPAD'))
         for deszcz in range(0, len(dane_podmienione[0])):
@@ -582,6 +580,10 @@ class Przetwarzanie_danych(object):
                 dane_podmienione[0][deszcz] = '55'
             elif dane_podmienione[0][deszcz] == 'słaby: deszcz ':
                 dane_podmienione[0][deszcz] = '35'
+            elif dane_podmienione[0][deszcz] == 'Lekkie opady':
+                dane_podmienione[0][deszcz] = '47'
+            elif dane_podmienione[0][deszcz] == 'Przelotne opady':
+                dane_podmienione[0][deszcz] = '42'
             else:
                 dane_podmienione[0][deszcz] = '0'
         while kolejny_rok < len(rok_range):
@@ -601,59 +603,60 @@ class Przetwarzanie_danych(object):
                 kolejny_mc += 1
             kolejny_rok += 1
         print('Sumaryczny opad dla podanego przedziału wynosi: ' + str(round(srednia_art_range, 2)) + ' mm/m^2')
-#----------------------------------D5.KONTENER-----------------------------------------------------
 
-from time import sleep
+#----------------------------------D5.DATY-----------------------------------------------------
 
-#------------daty do pozyskania danych archiwalnych---------------------------------------------------
-dzien = Operacje_na_plikach().dzien_pozyskiwanie_danych_plik_log_archiwalny()
-miesiac = Operacje_na_plikach().miesiac_pozyskiwanie_danych_plik_log_archiwalny()
-rok = Operacje_na_plikach().rok_pozyskiwanie_danych_plik_log_archiwalny()
+class Daty(object):
+    #------------daty do pozyskania danych archiwalnych---------------------------------------------------
+    dzien = int(Operacje_na_plikach().dzien_pozyskiwanie_danych_plik_log_archiwalny())
+    miesiac = int(Operacje_na_plikach().miesiac_pozyskiwanie_danych_plik_log_archiwalny())
+    rok = int(Operacje_na_plikach().rok_pozyskiwanie_danych_plik_log_archiwalny())
 
-#------------wprowadź daty do pozyskania danych archiwalnych ręcznie jakby automat nie działał---------
-dzien_recznie='15' #od 1 do 9 nalezy prowadzić przed liczbą 0
-miesiac_recznie = '11'
-rok_recznie = '2018'
-#dzien=dzien_recznie
-#miesiac=miesiac_recznie
-#rok=rok_recznie
+    #------------wprowadź daty do pozyskania danych archiwalnych ręcznie jakby automat nie działał---------
+    dzien_recznie='16' #od 1 do 9 nalezy prowadzić przed liczbą 0
+    miesiac_recznie = '11'
+    rok_recznie = '2018'
 
+    #dzien=dzien_recznie
+    #miesiac=miesiac_recznie
+    #rok=rok_recznie
 
-#-----------------wprowadź date do pozyskania danych podsumujwujacych w przedziale--------------------------
-data_dzien_pocz = 5
-data_dzien_koncowa = 5
-data_mc_pocz = 11
-data_mc_koncowa = 11
-data_rok_pocz = 2018
-data_rok_koncowa = 2018
-
-
-#---------------------------przypisanie klas--------------------
+    #-----------------wprowadź date do pozyskania danych podsumujwujacych w przedziale--------------------------
+    data_dzien_pocz = 5
+    data_dzien_koncowa = 15
+    data_mc_pocz = 11
+    data_mc_koncowa = 11
+    data_rok_pocz = 2018
+    data_rok_koncowa = 2018
+#----------------------------------D6.KONTENER-----------------------------------------------------
 pozyskiwane_dane = Pozyskiwane_dane()
 operacje_na_plikach = Operacje_na_plikach()
-przetwarzanie_danych=Przetwarzanie_danych()
+przetwarzanie_danych = Przetwarzanie_danych()
+#---------------------------przypisanie klas--------------------
 
 
 # reset plik sort
     #operacje_na_plikach.reset_plik_sort_czyszczenie_zawartosci()
 
-
-
 # Średnia temperatura w przedziale
     #przetwarzanie_danych.srednia_temp_w_podanym_przedziale()
 # Średni opad w przedziale
-    #przetwarzanie_danych.deszcz_w_podanym_przedziale()
+#przetwarzanie_danych.deszcz_w_podanym_przedziale()
 
 #odczyt danych:
     #operacje_na_plikach.odczyt_danych_z_wierszy()
     #operacje_na_plikach.zakres_wierszy()
     #operacje_na_plikach.odczyt_danych_z_kolumn()
     #operacje_na_plikach.zakres_kolumn()
+
+from time import sleep
+import datetime
+
 while True:
     print('Poczekaj do 5')
     operacje_na_plikach.dopisanie_do_pliku_log(pozyskiwane_dane.akutualna_temp(),pozyskiwane_dane.aktualne_opady())
     print('1')
-    operacje_na_plikach.dopisanie_do_pliku_log_archiwalny(pozyskiwane_dane.temeratura_archiwalna(), pozyskiwane_dane.opad_archiwalny())
+    operacje_na_plikach.dopisanie_do_pliku_log_archiwalny(pozyskiwane_dane.temeratura_archiwalna(),pozyskiwane_dane.opad_archiwalny())
     print('2')
     operacje_na_plikach.dopisanie_do_pliku_sort()
     print('3')
@@ -702,4 +705,3 @@ while True:
             rok_spr = int(input())
             przetwarzanie_danych.deszcz_w_ciagu_dnia()
     sleep(900)
-
