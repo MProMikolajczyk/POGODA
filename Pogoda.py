@@ -497,13 +497,13 @@ class Przetwarzanie_danych(object):
 
     #----------------------------Temperaura -----------------------------------------------------
 
-    def srednia_art_temp_calodobowa(self):
+    def srednia_art_temp_calodobowa(self,dzien_spr,miesiac_spr,rok_spr):
         poz_start = 0
         poz_finish = 24
         godz = 0
         dzien_range = [self.zbior_dni_w_mc[day] for day in range(dzien_spr - 1, dzien_spr)]
-        mc_range = [self.zbior_mc_typu_int[month] for month in range(Daty.data_mc_pocz - 1, Daty.data_mc_koncowa)]
-        rok_range = [self.zbior_lat[rok] for rok in range(Daty.data_rok_pocz - 1, Daty.data_rok_koncowa)]
+        mc_range = [self.zbior_mc_typu_int[month] for month in range(miesiac_spr - 1, miesiac_spr)]
+        rok_range = [self.zbior_lat[rok] for rok in range(rok_spr - 1, rok_spr)]
         dane_podmienione=list(self.tymczasowe_dane_podmienione_temperatura_opad('TEMPERATURA'))
         dane_miesiac_temp = [int(dane_podmienione[0][i]) for i in range(len(self.dane))\
                              if self.dane[i]['DATA'] == '{year}-{mc}-{day}'.format(year=rok_range[0],
@@ -523,15 +523,16 @@ class Przetwarzanie_danych(object):
                                                                                           day=dzien_range[0])\
               + str(round(srednia_art_calo_dniowa, 2))+' C')
 
-    def srednia_temp_w_podanym_przedziale(self):
+    def srednia_temp_w_podanym_przedziale(self,data_dzien_pocz,data_dzien_koncowa,data_mc_pocz,
+                                    data_mc_koncowa,data_rok_pocz,data_rok_koncowa):
         kolejny_dzien = 0
         kolejny_mc = 0
         kolejny_rok = 0
         srednia_art_range = 0
         # Podany przez użytkownika dzień / miesiąc / rok
-        dzien_range = [self.zbior_dni_w_mc[day] for day in range(Daty.data_dzien_pocz - 1, Daty.data_dzien_koncowa)]
-        mc_range = [self.zbior_mc_typu_int[month] for month in range(Daty.data_mc_pocz - 1, Daty.data_mc_koncowa)]
-        rok_range = [self.zbior_lat[rok] for rok in range(Daty.data_rok_pocz - 1, Daty.data_rok_koncowa)]
+        dzien_range = [self.zbior_dni_w_mc[day] for day in range(data_dzien_pocz - 1, data_dzien_koncowa)]
+        mc_range = [self.zbior_mc_typu_int[month] for month in range(data_mc_pocz - 1, data_mc_koncowa)]
+        rok_range = [self.zbior_lat[rok] for rok in range(data_rok_pocz - 1, data_rok_koncowa)]
         # Podmienia dane i mieli
         dane_podmienione = list(self.tymczasowe_dane_podmienione_temperatura_opad('TEMPERATURA'))
         while kolejny_rok < len(rok_range):
@@ -556,13 +557,13 @@ class Przetwarzanie_danych(object):
     #zbior_deszczy = ['słaby deszcz', 'słaby: deszcz opad przelotny ', 'deszcz ', 'słaby: deszcz ']
     # zbior należy co jakiś czas zauktualizować
 
-    def deszcz_w_ciagu_dnia(self):
+    def deszcz_w_ciagu_dnia(self,dzien_spr,miesiac_spr,rok_spr):
         poz_start = 0
         poz_finish = 24
         godz = 0
         dzien_range = [self.zbior_dni_w_mc[day] for day in range(dzien_spr - 1, dzien_spr)]
-        mc_range = [self.zbior_mc_typu_int[month] for month in range(Daty.data_mc_pocz - 1, Daty.data_mc_koncowa)]
-        rok_range = [self.zbior_lat[rok] for rok in range(Daty.data_rok_pocz - 1, Daty.data_rok_koncowa)]
+        mc_range = [self.zbior_mc_typu_int[month] for month in range(miesiac_spr - 1, miesiac_spr)]
+        rok_range = [self.zbior_lat[rok] for rok in range(rok_spr - 1, rok_spr)]
         dane_podmienione = list(self.tymczasowe_dane_podmienione_temperatura_opad('OPAD'))
         for deszcz in range(0, len(dane_podmienione[0])):
             if dane_podmienione[0][deszcz] == 'słaby deszcz':
@@ -593,15 +594,16 @@ class Przetwarzanie_danych(object):
                                                                    day=dzien_range[0]) \
               + str(round(srednia_art_calo_dniowa, 2))+' mm/1m^2')
 
-    def deszcz_w_podanym_przedziale(self):
+    def deszcz_w_podanym_przedziale(self,data_dzien_pocz,data_dzien_koncowa,data_mc_pocz,
+                                    data_mc_koncowa,data_rok_pocz,data_rok_koncowa):
         kolejny_dzien = 0
         kolejny_mc = 0
         kolejny_rok = 0
         srednia_art_range = 0
         # Podany przez użytkownika dzień / miesiąc / rok
-        dzien_range = [self.zbior_dni_w_mc[day] for day in range(Daty.data_dzien_pocz - 1, Daty.data_dzien_koncowa)]
-        mc_range = [self.zbior_mc_typu_int[month] for month in range(Daty.data_mc_pocz - 1, Daty.data_mc_koncowa)]
-        rok_range = [self.zbior_lat[rok] for rok in range(Daty.data_rok_pocz - 1, Daty.data_rok_koncowa)]
+        dzien_range = [self.zbior_dni_w_mc[day] for day in range(data_dzien_pocz - 1, data_dzien_koncowa)]
+        mc_range = [self.zbior_mc_typu_int[month] for month in range(data_mc_pocz - 1, data_mc_koncowa)]
+        rok_range = [self.zbior_lat[rok] for rok in range(data_rok_pocz - 1, data_rok_koncowa)]
         # Podmienia dane i mieli
         dane_podmienione = list(self.tymczasowe_dane_podmienione_temperatura_opad('OPAD'))
         for deszcz in range(0, len(dane_podmienione[0])):
@@ -656,86 +658,178 @@ class Daty(object):
     #miesiac=miesiac_recznie
     #rok=rok_recznie
 
-    #-----------------wprowadź date do pozyskania danych podsumujwujacych w przedziale--------------------------
-    data_dzien_pocz = 5
-    data_dzien_koncowa = 15
-    data_mc_pocz = 11
-    data_mc_koncowa = 11
-    data_rok_pocz = 2018
-    data_rok_koncowa = 2018
-#----------------------------------D6.KONTENER-----------------------------------------------------
+
+#----------------------------------D6.Nawigacja(Panel główny)-----------------------------------------------------
+class Nawigacja(object):
+
+    #zebrane wszystkie mozliwe wybory znawigacji na wszystkich poziomach
+
+    def wybory(self):
+        wybor = ''
+        while wybor != 'w':
+            wybor = input('Wpisz: ').lower()
+            if wybor == 'dp':
+                self.panel_dane_pogodowe_poziom_0()
+            elif wybor == 'op':
+                self.panel_operacje_na_plikach_poziom_0()
+            elif wybor == 'b':
+                self.panel_startowy()
+            elif wybor == 'w':
+                main()
+            elif wybor == 'q':
+                pass
+            elif wybor == 'std':
+                self.panel_dane_pogodowe_srednia_dobowa_temperatura_poziom_1()
+            elif wybor == 'io':
+                self.panel_dane_pogodowe_intesywnosc_opadow_poziom_1()
+            elif wybor == 'stp':
+                self.panel_dane_pogodowe_srednia_temperatura_w_przedziale_poziom_1()
+            elif wybor == 'iop':
+                self.panel_dane_pogodowe_intesywnosc_opadow_w_przedziale_poziom_1()
+
+
+    #panel startowy, możliwe warianty wyboru
+
+    def panel_startowy(self):
+        print('Aktualna temperatuta wynosi: ' + str(pozyskiwane_dane.akutualna_temp()) + ' C')
+        print('Aktualne warunki atmosferyczne: ' + str(pozyskiwane_dane.aktualne_opady()))
+        print('\nDostępne komendy: ')
+        print('\nDane pogodowe: DP')
+        print('Operacje na plikach: OP')
+        print('Wróć do pozyskiwania danych: W')
+        print('Koniec: Q')
+        self.wybory()
+
+    # Dane pogodowe poziom 0
+
+    def panel_dane_pogodowe_poziom_0(self):
+        print('\nŚrednia dobowa temperatura wpisz: STD')
+        print('Itensywność opdaów w ciągu dnia wpisz: IO')
+        print('Średnia temperatura w przedziale: STP')
+        print('Itensywność opadów w przedziale: IOP')
+        print('Wróc do panelu głównego: B')
+        print('Wróć do pozyskiwania danych: W')
+        print('Koniec: Q')
+        self.wybory()
+
+    # Średnia dobowa temperatura
+    def panel_dane_pogodowe_srednia_dobowa_temperatura_poziom_1(self):
+        print('Podaj dzien: ')
+        dzien_spr = int(input())
+        print('Podaj miesiac: ')
+        miesiac_spr = int(input())
+        print('Podaj rok: ')
+        rok_spr = int(input())
+        przetwarzanie_danych.srednia_art_temp_calodobowa(dzien_spr, miesiac_spr, rok_spr)
+        self.panel_dane_pogodowe_poziom_0()
+
+    # Itensywność opdaów w ciągu dnia
+    def panel_dane_pogodowe_intesywnosc_opadow_poziom_1(self):
+        print('Podaj dzien: ')
+        dzien_spr = int(input())
+        print('Podaj miesiac: ')
+        miesiac_spr = int(input())
+        print('Podaj rok: ')
+        rok_spr = int(input())
+        przetwarzanie_danych.deszcz_w_ciagu_dnia(dzien_spr, miesiac_spr, rok_spr)
+        self.panel_dane_pogodowe_poziom_0()
+
+    # Średnia dobowa temperatura w przedziale
+    def panel_dane_pogodowe_srednia_temperatura_w_przedziale_poziom_1(self):
+        print('Podaj dzien poczatkowy: ')
+        data_dzien_pocz = int(input())
+        print('Podaj dzien końcowy: ')
+        data_dzien_koncowa = int(input())
+        print('Podaj miesiac poczatkowy: ')
+        data_mc_pocz = int(input())
+        print('Podaj miesiac końcowy: ')
+        data_mc_koncowa = int(input())
+        print('Podaj rok poczatkowy: ')
+        data_rok_pocz = int(input())
+        print('Podaj rok końćowy: ')
+        data_rok_koncowa = int(input())
+        przetwarzanie_danych.srednia_temp_w_podanym_przedziale(data_dzien_pocz,data_dzien_koncowa,data_mc_pocz,
+                                    data_mc_koncowa,data_rok_pocz,data_rok_koncowa)
+        self.panel_dane_pogodowe_poziom_0()
+
+    # intensywnosc_opadow_w_przedziale
+    def panel_dane_pogodowe_intesywnosc_opadow_w_przedziale_poziom_1(self):
+        print('Podaj dzien poczatkowy: ')
+        data_dzien_pocz = int(input())
+        print('Podaj dzien końcowy: ')
+        data_dzien_koncowa = int(input())
+        print('Podaj miesiac poczatkowy: ')
+        data_mc_pocz = int(input())
+        print('Podaj miesiac końcowy: ')
+        data_mc_koncowa = int(input())
+        print('Podaj rok poczatkowy: ')
+        data_rok_pocz = int(input())
+        print('Podaj rok końćowy: ')
+        data_rok_koncowa = int(input())
+        przetwarzanie_danych.deszcz_w_podanym_przedziale(data_dzien_pocz,data_dzien_koncowa,data_mc_pocz,
+                                    data_mc_koncowa,data_rok_pocz,data_rok_koncowa)
+        self.panel_dane_pogodowe_poziom_0()
+
+    # Operacje na plikach (rest + odczyt danych) poziom 0
+
+    # odczyt danych:
+    def panel_operacje_na_plikach_poziom_0(self):
+        pass
+
+    def panel_operacje_na_plikach_odczyt_danych_z_wierszy_poziom_1(self):
+        operacje_na_plikach.odczyt_danych_z_wierszy()
+        pass
+
+    def panel_operacje_na_plikach_zakres_wierszy_poziom_1(self):
+        operacje_na_plikach.zakres_wierszy()
+        pass
+
+    def panel_operacje_na_plikach_odczyt_danych_z_kolumn_poziom_1(self):
+        operacje_na_plikach.odczyt_danych_z_kolumn()
+        pass
+
+    def panel_operacje_na_plikach_zakres_kolumn_poziom_1(self):
+        operacje_na_plikach.zakres_kolumn()
+        pass
+
+    # reset pliku Pogoda_data_sort
+    def panel_operacje_na_plikach_reset_plik_sort_czyszczenie_zawartosci_poziom_1(self):
+        operacje_na_plikach.reset_plik_sort_czyszczenie_zawartosci()
+        main()
+        pass
+
+#---------------------------D7.PRZYPISANIE KLAS------------------------------------------------
+
 pozyskiwane_dane = Pozyskiwane_dane()
 operacje_na_plikach = Operacje_na_plikach()
 przetwarzanie_danych = Przetwarzanie_danych()
-#---------------------------przypisanie klas--------------------
+nawigacja = Nawigacja()
 
+#----------------------------------D8.KONTENER-----------------------------------------------------
 
-# reset plik sort
-    #operacje_na_plikach.reset_plik_sort_czyszczenie_zawartosci()
+def main():
+    from time import sleep
 
-# Średnia temperatura w przedziale
-    #przetwarzanie_danych.srednia_temp_w_podanym_przedziale()
-# Średni opad w przedziale
-#przetwarzanie_danych.deszcz_w_podanym_przedziale()
+    while True:
+        print('Poczekaj aż się załaduje (do 5)')
+        operacje_na_plikach.dopisanie_do_pliku_log(pozyskiwane_dane.akutualna_temp(),pozyskiwane_dane.aktualne_opady())
+        print('1')
+        operacje_na_plikach.dopisanie_do_pliku_log_archiwalny(list(pozyskiwane_dane.temeratura_archiwalna()), pozyskiwane_dane.opad_archiwalny())
+        print('2')
+        operacje_na_plikach.dopisanie_do_pliku_sort()
+        print('3')
+        try:
+            operacje_na_plikach.nadpisywanie_aktualnym_danymi_plik_sort()
+            print("4a")
+        except:
+            operacje_na_plikach.nadpisywanie_aktualnym_danymi_plik_sort_calosc()
+            print("4b")
+        try:
+            operacje_na_plikach.nadpisywanie_archiwum_plik_sort()
+            print("5a")
+        except:
+            operacje_na_plikach.nadpisywanie_archiwum_plik_sort_calosc()
+            print("5b")
 
-#odczyt danych:
-    #operacje_na_plikach.odczyt_danych_z_wierszy()
-    #operacje_na_plikach.zakres_wierszy()
-    #operacje_na_plikach.odczyt_danych_z_kolumn()
-    #operacje_na_plikach.zakres_kolumn()
-
-from time import sleep
-
-while True:
-    print('Poczekaj do 5')
-    operacje_na_plikach.dopisanie_do_pliku_log(pozyskiwane_dane.akutualna_temp(),pozyskiwane_dane.aktualne_opady())
-    print('1')
-    operacje_na_plikach.dopisanie_do_pliku_log_archiwalny(list(pozyskiwane_dane.temeratura_archiwalna()), pozyskiwane_dane.opad_archiwalny())
-    print('2')
-    operacje_na_plikach.dopisanie_do_pliku_sort()
-    print('3')
-    try:
-        operacje_na_plikach.nadpisywanie_aktualnym_danymi_plik_sort()
-        print("4a")
-    except:
-        operacje_na_plikach.nadpisywanie_aktualnym_danymi_plik_sort_calosc()
-        print("4b")
-    try:
-        operacje_na_plikach.nadpisywanie_archiwum_plik_sort()
-        print("5a")
-    except:
-        operacje_na_plikach.nadpisywanie_archiwum_plik_sort_calosc()
-        print("5b")
-
-    print('\n'*50)
-
-    #wyświetla utualną temoeraturę i opady co 15min
-    print('Aktualna temperatuta wynosi: ' + str(pozyskiwane_dane.akutualna_temp()) + ' C')
-    print('Aktualne warunki atmosferyczne: ' + str(pozyskiwane_dane.aktualne_opady()))
-    print('\nWpisz żeby uzusykać: ')
-    print('\nInformacje dniowe: sd ')
-    wybor_panel_glowny = input().lower()
-    if wybor_panel_glowny == 'sd':
-        print('\nWpisz: ')
-        print('\nŚrednia dobowa temperatura wpisz: std: ')
-        print('Itensywność opdaów w ciągu dnia wpisz: io ')
-        Informacje_dniowe = input().lower()
-        if Informacje_dniowe == 'std':
-            print('\nWybrałeś srednią dobową temperaturę')
-            print('Podaj dzien: ')
-            dzien_spr = int(input())
-            print('Podaj miesiac: ')
-            miesiac_spr = int(input())
-            print('Podaj rok: ')
-            rok_spr = int(input())
-            przetwarzanie_danych.srednia_art_temp_calodobowa()
-        elif Informacje_dniowe == 'io':
-            print('\nWybrałeś itensywność opdaów w ciągu dnia')
-            print('Podaj dzien: ')
-            dzien_spr = int(input())
-            print('Podaj miesiac: ')
-            miesiac_spr = int(input())
-            print('Podaj rok: ')
-            rok_spr = int(input())
-            przetwarzanie_danych.deszcz_w_ciagu_dnia()
-    sleep(900)
+        sleep(900)
+main()
