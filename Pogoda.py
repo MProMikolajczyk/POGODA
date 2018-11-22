@@ -444,14 +444,14 @@ class Operacje_na_plikach(object):
 
 #---------------------------------operacje na kolumnach---------------------------------------------
 
-    def odczyt_danych_z_kolumn(self,nr_kolumny=True,nr_plik=0):
+    def odczyt_danych_z_kolumn(self,nr_kolumny=1,nr_plik=0,ID=4):
         with open(self.pliki[nr_plik], "r") as csvfile:
             reader =self.csv.DictReader(csvfile)
             for row in reader:
-                yield(row[self.nazwy_kolumn[nr_kolumny]])
+                yield(row[self.nazwy_kolumn[nr_kolumny]], row[self.nazwy_kolumn[ID]])
 
-    def zakres_kolumn(self,start=0, finish=True,nr_kolumny=True,nr_plik=0): #wyniki od start do finish z dla nr kolumny
-        zakres = list(self.odczyt_danych_z_kolumn(nr_kolumny,nr_plik))
+    def zakres_kolumn(self,start=0, finish=0,nr_kolumny=1,nr_plik=0,ID=4): #wyniki od start do finish z dla nr kolumny
+        zakres = list(self.odczyt_danych_z_kolumn(nr_kolumny, nr_plik,ID))
         for wiersz in range(start, finish):
             yield zakres[wiersz]
 
@@ -462,7 +462,7 @@ class Operacje_na_plikach(object):
             for row in reader:
                     yield row
 
-    def zakres_wierszy(self,start=0, finish=True,nr_plik=0): #wyniki od start do finish dla wszystkich wierszy
+    def zakres_wierszy(self,start=0, finish=0, nr_plik=0): #wyniki od start do finish dla wszystkich wierszy
         zakres = list(self.odczyt_danych_z_wierszy(nr_plik))
         for wiersz in range(start, finish):
             yield zakres[wiersz]
@@ -509,19 +509,22 @@ class Przetwarzanie_danych(object):
                              if self.dane[i]['DATA'] == '{year}-{mc}-{day}'.format(year=rok_range[0],
                                                                                           mc=mc_range[0],
                                                                                           day=dzien_range[0])]
-        while poz_finish <= len(dane_miesiac_temp):
-            dane_6_godzine = [dane_miesiac_temp[data_w_mc] for data_w_mc in range(poz_start, poz_finish)]
-            srednia_art_6_godzinna = sum(dane_6_godzine) / len(dane_6_godzine)
-            print('Średnia temperaura od godz: ' + str(godz) + ' do godz ' + str(godz + 6) + \
-                  ' wynosi: ' + str(round(srednia_art_6_godzinna, 2))+' C')
-            poz_start += 24
-            poz_finish += 24
-            godz += 6
-        srednia_art_calo_dniowa=sum(dane_miesiac_temp) / len(dane_miesiac_temp)
-        print('Średnia temperatura dla {year}-{mc}-{day} wynosi: '.format(year=rok_range[0],
-                                                                                          mc=mc_range[0],
-                                                                                          day=dzien_range[0])\
-              + str(round(srednia_art_calo_dniowa, 2))+' C')
+        try:
+            while poz_finish <= len(dane_miesiac_temp):
+                dane_6_godzine = [dane_miesiac_temp[data_w_mc] for data_w_mc in range(poz_start, poz_finish)]
+                srednia_art_6_godzinna = sum(dane_6_godzine) / len(dane_6_godzine)
+                print('Średnia temperaura od godz: ' + str(godz) + ' do godz ' + str(godz + 6) + \
+                      ' wynosi: ' + str(round(srednia_art_6_godzinna, 2))+' C')
+                poz_start += 24
+                poz_finish += 24
+                godz += 6
+            srednia_art_calo_dniowa=sum(dane_miesiac_temp) / len(dane_miesiac_temp)
+            print('Średnia temperatura dla {year}-{mc}-{day} wynosi: '.format(year=rok_range[0],
+                                                                                              mc=mc_range[0],
+                                                                                              day=dzien_range[0])\
+                  + str(round(srednia_art_calo_dniowa, 2))+' C')
+        except:
+            print('Brak danych w zbiorze')
 
     def srednia_temp_w_podanym_przedziale(self,data_dzien_pocz,data_dzien_koncowa,data_mc_pocz,
                                     data_mc_koncowa,data_rok_pocz,data_rok_koncowa):
@@ -535,23 +538,26 @@ class Przetwarzanie_danych(object):
         rok_range = [self.zbior_lat[rok] for rok in range(data_rok_pocz - 1, data_rok_koncowa)]
         # Podmienia dane i mieli
         dane_podmienione = list(self.tymczasowe_dane_podmienione_temperatura_opad('TEMPERATURA'))
-        while kolejny_rok < len(rok_range):
-            while kolejny_mc < len(mc_range):
-                while kolejny_dzien < len(dzien_range):
-                    dane_miesiac_temp = [int(dane_podmienione[0][i]) for i in range(len(self.dane)) \
-                                         if self.dane[i]['DATA'] == '{year}-{mc}-{day}'.format(year=rok_range[kolejny_rok],
+        try:
+            while kolejny_rok < len(rok_range):
+                while kolejny_mc < len(mc_range):
+                    while kolejny_dzien < len(dzien_range):
+                        dane_miesiac_temp = [int(dane_podmienione[0][i]) for i in range(len(self.dane)) \
+                                             if self.dane[i]['DATA'] == '{year}-{mc}-{day}'.format(year=rok_range[kolejny_rok],
+                                                                                              mc=mc_range[kolejny_mc],
+                                                                                              day=dzien_range[kolejny_dzien])]
+                        srednia_art_dniowa = sum(dane_miesiac_temp) / len(dane_miesiac_temp)
+                        print('Średnia temperatura dla {year}-{mc}-{day} wynosi: '.format(year=rok_range[kolejny_rok],
                                                                                           mc=mc_range[kolejny_mc],
-                                                                                          day=dzien_range[kolejny_dzien])]
-                    srednia_art_dniowa = sum(dane_miesiac_temp) / len(dane_miesiac_temp)
-                    print('Średnia temperatura dla {year}-{mc}-{day} wynosi: '.format(year=rok_range[kolejny_rok],
-                                                                                      mc=mc_range[kolejny_mc],
-                                                                                      day=dzien_range[kolejny_dzien]) \
-                          + str(round(srednia_art_dniowa, 2)) + ' C')
-                    kolejny_dzien += 1
-                    srednia_art_range += srednia_art_dniowa
-                kolejny_mc += 1
-            kolejny_rok += 1
-        print('Średnia temperatura dla podanego przedziału wynosi: ' + str(round(srednia_art_range / kolejny_dzien,2)) + ' C')
+                                                                                          day=dzien_range[kolejny_dzien]) \
+                              + str(round(srednia_art_dniowa, 2)) + ' C')
+                        kolejny_dzien += 1
+                        srednia_art_range += srednia_art_dniowa
+                    kolejny_mc += 1
+                kolejny_rok += 1
+            print('Średnia temperatura dla podanego przedziału wynosi: ' + str(round(srednia_art_range / kolejny_dzien,2)) + ' C')
+        except:
+            print('Brak danych w zbiorze')
 
     # ----------------------------OPAD -----------------------------------------------------
     #zbior_deszczy = ['słaby deszcz', 'słaby: deszcz opad przelotny ', 'deszcz ', 'słaby: deszcz ']
@@ -574,25 +580,32 @@ class Przetwarzanie_danych(object):
                 dane_podmienione[0][deszcz] = '55'
             elif dane_podmienione[0][deszcz] == 'słaby: deszcz ':
                 dane_podmienione[0][deszcz] = '35'
+            elif dane_podmienione[0][deszcz] == 'Lekkie opady':
+                dane_podmienione[0][deszcz] = '47'
+            elif dane_podmienione[0][deszcz] == 'Przelotne opady':
+                dane_podmienione[0][deszcz] = '42'
             else:
                 dane_podmienione[0][deszcz] = '0'
         dane_miesiac_opad = [int(dane_podmienione[0][i]) for i in range(len(self.dane)) \
                              if self.dane[i]['DATA'] == '{year}-{mc}-{day}'.format(year=rok_range[0],
                                                                                           mc=mc_range[0],
                                                                                           day=dzien_range[0])]
-        while poz_finish <= len(dane_miesiac_opad):
-            dane_6_godzine = [dane_miesiac_opad[data_w_mc] for data_w_mc in range(poz_start, poz_finish)]
-            srednia_art_6_godzinna = sum(dane_6_godzine) / len(dane_6_godzine)
-            print('Średnia opad od godz: ' + str(godz) + ' do godz ' + str(godz + 6) + \
-                  ' wynosi: ' + str(round(srednia_art_6_godzinna, 2))+' mm/1m^2')
-            poz_start += 24
-            poz_finish += 24
-            godz += 6
-        srednia_art_calo_dniowa = sum(dane_miesiac_opad) / 24
-        print('Średnia opad dla {year}-{mc}-{day} wynosi: '.format(year=rok_range[0],
-                                                                   mc=mc_range[0],
-                                                                   day=dzien_range[0]) \
-              + str(round(srednia_art_calo_dniowa, 2))+' mm/1m^2')
+        try:
+            while poz_finish <= len(dane_miesiac_opad):
+                dane_6_godzine = [dane_miesiac_opad[data_w_mc] for data_w_mc in range(poz_start, poz_finish)]
+                srednia_art_6_godzinna = sum(dane_6_godzine) / len(dane_6_godzine)
+                print('Średni opad od godz: ' + str(godz) + ' do godz ' + str(godz + 6) + \
+                      ' wynosi: ' + str(round(srednia_art_6_godzinna, 2))+' mm/1m^2')
+                poz_start += 24
+                poz_finish += 24
+                godz += 6
+            srednia_art_calo_dniowa = sum(dane_miesiac_opad) / 24
+            print('Średni opad dla {year}-{mc}-{day} wynosi: '.format(year=rok_range[0],
+                                                                       mc=mc_range[0],
+                                                                       day=dzien_range[0]) \
+                  + str(round(srednia_art_calo_dniowa, 2))+' mm/1m^2')
+        except:
+            print('Brak danych w zbiorze')
 
     def deszcz_w_podanym_przedziale(self,data_dzien_pocz,data_dzien_koncowa,data_mc_pocz,
                                     data_mc_koncowa,data_rok_pocz,data_rok_koncowa):
@@ -621,23 +634,26 @@ class Przetwarzanie_danych(object):
                 dane_podmienione[0][deszcz] = '42'
             else:
                 dane_podmienione[0][deszcz] = '0'
-        while kolejny_rok < len(rok_range):
-            while kolejny_mc < len(mc_range):
-                while kolejny_dzien < len(dzien_range):
-                    dane_miesiac_opad = [int(dane_podmienione[0][i]) for i in range(len(self.dane)) \
-                                         if self.dane[i]['DATA'] == '{year}-{mc}-{day}'.format(year=rok_range[kolejny_rok],
+        try:
+            while kolejny_rok < len(rok_range):
+                while kolejny_mc < len(mc_range):
+                    while kolejny_dzien < len(dzien_range):
+                        dane_miesiac_opad = [int(dane_podmienione[0][i]) for i in range(len(self.dane)) \
+                                             if self.dane[i]['DATA'] == '{year}-{mc}-{day}'.format(year=rok_range[kolejny_rok],
+                                                                                              mc=mc_range[kolejny_mc],
+                                                                                              day=dzien_range[kolejny_dzien])]
+                        srednia_art_dniowa = sum(dane_miesiac_opad) / 24
+                        print('Średni opad dla {year}-{mc}-{day} wynosi: '.format(year=rok_range[kolejny_rok],
                                                                                           mc=mc_range[kolejny_mc],
-                                                                                          day=dzien_range[kolejny_dzien])]
-                    srednia_art_dniowa = sum(dane_miesiac_opad) / 24
-                    print('Średni opad dla {year}-{mc}-{day} wynosi: '.format(year=rok_range[kolejny_rok],
-                                                                                      mc=mc_range[kolejny_mc],
-                                                                                      day=dzien_range[kolejny_dzien]) \
-                          + str(round(srednia_art_dniowa, 2)) + ' mm/m2')
-                    kolejny_dzien += 1
-                    srednia_art_range += srednia_art_dniowa
-                kolejny_mc += 1
-            kolejny_rok += 1
-        print('Sumaryczny opad dla podanego przedziału wynosi: ' + str(round(srednia_art_range, 2)) + ' mm/m^2')
+                                                                                          day=dzien_range[kolejny_dzien]) \
+                              + str(round(srednia_art_dniowa, 2)) + ' mm/m2')
+                        kolejny_dzien += 1
+                        srednia_art_range += srednia_art_dniowa
+                    kolejny_mc += 1
+                kolejny_rok += 1
+            print('Sumaryczny opad dla podanego przedziału wynosi: ' + str(round(srednia_art_range, 2)) + ' mm/m^2')
+        except:
+            print('Brak danych w zbiorze')
 
 #----------------------------------D5.DATY-----------------------------------------------------
 
@@ -662,36 +678,63 @@ class Daty(object):
 #----------------------------------D6.Nawigacja(Panel główny)-----------------------------------------------------
 class Nawigacja(object):
 
+    from sys import exit
     #zebrane wszystkie mozliwe wybory znawigacji na wszystkich poziomach
 
     def wybory(self):
         wybor = ''
-        while wybor != 'w':
+        while wybor != 'q':
             wybor = input('Wpisz: ').lower()
             if wybor == 'dp':
                 self.panel_dane_pogodowe_poziom_0()
+                break
             elif wybor == 'op':
                 self.panel_operacje_na_plikach_poziom_0()
+                break
             elif wybor == 'b':
                 self.panel_startowy()
+                break
             elif wybor == 'w':
                 main()
             elif wybor == 'q':
-                pass
+                self.exit()
             elif wybor == 'std':
                 self.panel_dane_pogodowe_srednia_dobowa_temperatura_poziom_1()
+                break
             elif wybor == 'io':
                 self.panel_dane_pogodowe_intesywnosc_opadow_poziom_1()
+                break
             elif wybor == 'stp':
                 self.panel_dane_pogodowe_srednia_temperatura_w_przedziale_poziom_1()
+                break
             elif wybor == 'iop':
                 self.panel_dane_pogodowe_intesywnosc_opadow_w_przedziale_poziom_1()
-
+                break
+            elif wybor == 'odw':
+                self.panel_operacje_na_plikach_odczyt_danych_z_wierszy_poziom_1()
+                break
+            elif wybor == 'odk':
+                self.panel_operacje_na_plikach_odczyt_danych_z_kolumn_poziom_1()
+                break
+            elif wybor == 'odwz':
+                self.panel_operacje_na_plikach_zakres_wierszy_poziom_1()
+                break
+            elif wybor == 'odkz':
+                self.panel_operacje_na_plikach_zakres_kolumn_poziom_1()
+                break
+            elif wybor == 'res':
+                print('potwierdź znakiem "t"')
+                if input('Czy na pewno') == 't':
+                    self.panel_operacje_na_plikach_reset_plik_sort_czyszczenie_zawartosci_poziom_1()
+                    break
+                else:
+                    self.panel_operacje_na_plikach_poziom_0()
+                    break
 
     #panel startowy, możliwe warianty wyboru
 
     def panel_startowy(self):
-        print('Aktualna temperatuta wynosi: ' + str(pozyskiwane_dane.akutualna_temp()) + ' C')
+        print('\nAktualna temperatuta wynosi: ' + str(pozyskiwane_dane.akutualna_temp()) + ' C')
         print('Aktualne warunki atmosferyczne: ' + str(pozyskiwane_dane.aktualne_opady()))
         print('\nDostępne komendy: ')
         print('\nDane pogodowe: DP')
@@ -714,58 +757,40 @@ class Nawigacja(object):
 
     # Średnia dobowa temperatura
     def panel_dane_pogodowe_srednia_dobowa_temperatura_poziom_1(self):
-        print('Podaj dzien: ')
-        dzien_spr = int(input())
-        print('Podaj miesiac: ')
-        miesiac_spr = int(input())
-        print('Podaj rok: ')
-        rok_spr = int(input())
+        dzien_spr = int(input('\nPodaj dzien: '))
+        miesiac_spr = int(input('Podaj miesiac: '))
+        rok_spr = int(input('Podaj rok: '))
         przetwarzanie_danych.srednia_art_temp_calodobowa(dzien_spr, miesiac_spr, rok_spr)
         self.panel_dane_pogodowe_poziom_0()
 
     # Itensywność opdaów w ciągu dnia
     def panel_dane_pogodowe_intesywnosc_opadow_poziom_1(self):
-        print('Podaj dzien: ')
-        dzien_spr = int(input())
-        print('Podaj miesiac: ')
-        miesiac_spr = int(input())
-        print('Podaj rok: ')
-        rok_spr = int(input())
+        dzien_spr = int(input('\nPodaj dzien: '))
+        miesiac_spr = int(input('Podaj miesiac: '))
+        rok_spr = int(input('Podaj rok: '))
         przetwarzanie_danych.deszcz_w_ciagu_dnia(dzien_spr, miesiac_spr, rok_spr)
         self.panel_dane_pogodowe_poziom_0()
 
     # Średnia dobowa temperatura w przedziale
     def panel_dane_pogodowe_srednia_temperatura_w_przedziale_poziom_1(self):
-        print('Podaj dzien poczatkowy: ')
-        data_dzien_pocz = int(input())
-        print('Podaj dzien końcowy: ')
-        data_dzien_koncowa = int(input())
-        print('Podaj miesiac poczatkowy: ')
-        data_mc_pocz = int(input())
-        print('Podaj miesiac końcowy: ')
-        data_mc_koncowa = int(input())
-        print('Podaj rok poczatkowy: ')
-        data_rok_pocz = int(input())
-        print('Podaj rok końćowy: ')
-        data_rok_koncowa = int(input())
+        data_dzien_pocz = int(input('\nPodaj dzien poczatkowy: '))
+        data_dzien_koncowa = int(input('Podaj dzien końcowy: '))
+        data_mc_pocz = int(input('Podaj miesiac poczatkowy: '))
+        data_mc_koncowa = int(input('Podaj miesiac końcowy: '))
+        data_rok_pocz = int(input('Podaj rok poczatkowy: '))
+        data_rok_koncowa = int(input('Podaj rok końćowy: '))
         przetwarzanie_danych.srednia_temp_w_podanym_przedziale(data_dzien_pocz,data_dzien_koncowa,data_mc_pocz,
                                     data_mc_koncowa,data_rok_pocz,data_rok_koncowa)
         self.panel_dane_pogodowe_poziom_0()
 
     # intensywnosc_opadow_w_przedziale
     def panel_dane_pogodowe_intesywnosc_opadow_w_przedziale_poziom_1(self):
-        print('Podaj dzien poczatkowy: ')
-        data_dzien_pocz = int(input())
-        print('Podaj dzien końcowy: ')
-        data_dzien_koncowa = int(input())
-        print('Podaj miesiac poczatkowy: ')
-        data_mc_pocz = int(input())
-        print('Podaj miesiac końcowy: ')
-        data_mc_koncowa = int(input())
-        print('Podaj rok poczatkowy: ')
-        data_rok_pocz = int(input())
-        print('Podaj rok końćowy: ')
-        data_rok_koncowa = int(input())
+        data_dzien_pocz = int(input('\nPodaj dzien poczatkowy: '))
+        data_dzien_koncowa = int(input('Podaj dzien końcowy: '))
+        data_mc_pocz = int(input('Podaj miesiac poczatkowy: '))
+        data_mc_koncowa = int(input('Podaj miesiac końcowy: '))
+        data_rok_pocz = int(input('Podaj rok poczatkowy: '))
+        data_rok_koncowa = int(input('Podaj rok końćowy: '))
         przetwarzanie_danych.deszcz_w_podanym_przedziale(data_dzien_pocz,data_dzien_koncowa,data_mc_pocz,
                                     data_mc_koncowa,data_rok_pocz,data_rok_koncowa)
         self.panel_dane_pogodowe_poziom_0()
@@ -774,29 +799,74 @@ class Nawigacja(object):
 
     # odczyt danych:
     def panel_operacje_na_plikach_poziom_0(self):
-        pass
+        print('\nOdczyt danych wszytskich wierszy z pliku wpisz: ODW')
+        print('Odczyt danych pojedynczej kolumny z pliku wpisz: ODK')
+        print('Odczyt danych z ustalonego zkresu wierszy wpisz: ODWZ')
+        print('Odczyt danych z ustanogo zakresu kolumn  wpisz: ODKZ')
+        print('Reset pliku  wpisz: RES')
+        print('Wróc do panelu głównego: B')
+        print('Wróć do pozyskiwania danych: W')
+        print('Koniec: Q')
+        self.wybory()
 
+    #Odczyt danych z wierszy i kolumn
     def panel_operacje_na_plikach_odczyt_danych_z_wierszy_poziom_1(self):
-        operacje_na_plikach.odczyt_danych_z_wierszy()
-        pass
-
-    def panel_operacje_na_plikach_zakres_wierszy_poziom_1(self):
-        operacje_na_plikach.zakres_wierszy()
-        pass
+        for wiersz in list(operacje_na_plikach.odczyt_danych_z_wierszy(1)):
+            print(wiersz)
+        self.panel_operacje_na_plikach_poziom_0()
 
     def panel_operacje_na_plikach_odczyt_danych_z_kolumn_poziom_1(self):
-        operacje_na_plikach.odczyt_danych_z_kolumn()
-        pass
+        print('\nTEMPERATURA wpisz: 0')
+        print('OPAD wpisz: 1')
+        print('DATA wpisz: 2')
+        print('CZAS wpisz: 3')
+        nr_kolumny = ''
+        while nr_kolumny != '0' or nr_kolumny != '1' or nr_kolumny != '2' or nr_kolumny != '3':
+            nr_kolumny = input('Podaj nr kolumny: ')
+            if nr_kolumny == '0' or nr_kolumny == '1' or nr_kolumny == '2' or nr_kolumny == '3':
+                for wiersz in list(operacje_na_plikach.odczyt_danych_z_kolumn(int(nr_kolumny), 1)):
+                    print([wiersz])
+                self.panel_operacje_na_plikach_poziom_0()
+                break
+
+        # Zakres wierszy i kolumn
+
+    def panel_operacje_na_plikach_zakres_wierszy_poziom_1(self):
+        print('\nDostępny zakres od 0 do {0}'.format(len(list(operacje_na_plikach.odczyt_danych_z_wierszy()))))
+        start = -1
+        finish = len(list(operacje_na_plikach.odczyt_danych_z_wierszy())) + 1
+        while int(start)<= 0 or int(finish) >= len(list(operacje_na_plikach.odczyt_danych_z_wierszy())):
+            start = input('Podaj początek: ')
+            finish = input('Podaj koniec: ')
+            if int(start) >= 0 and int(finish) <= len(list(operacje_na_plikach.odczyt_danych_z_wierszy())):
+                for wiersz in list(operacje_na_plikach.zakres_wierszy(int(start), int(finish), 1)):
+                    print([wiersz])
+                break
+        self.panel_operacje_na_plikach_poziom_0()
+
 
     def panel_operacje_na_plikach_zakres_kolumn_poziom_1(self):
-        operacje_na_plikach.zakres_kolumn()
-        pass
+        print('\nDostępny zakres od 0 do {0}'.format(len(list(operacje_na_plikach.odczyt_danych_z_wierszy()))))
+        start = -1
+        finish = len(list(operacje_na_plikach.odczyt_danych_z_wierszy())) + 1
+        nr_kolumny = ''
+        while int(start) <= 0 or int(finish) >= len(list(operacje_na_plikach.odczyt_danych_z_wierszy())):
+            start = input('Podaj początek: ')
+            finish = input('Podaj koniec: ')
+            if int(start) >= 0 and int(finish) <= len(list(operacje_na_plikach.odczyt_danych_z_wierszy())):
+                while nr_kolumny != '0' or nr_kolumny != '1' or nr_kolumny != '2' or nr_kolumny != '3':
+                    nr_kolumny = input('Podaj nr kolumny: ')
+                    if nr_kolumny == '0' or nr_kolumny == '1' or nr_kolumny == '2' or nr_kolumny == '3':
+                        for wiersz in list(operacje_na_plikach.zakres_kolumn(int(start), int(finish),int(nr_kolumny), 1, 4)):
+                            print([wiersz])
+                        break
+        self.panel_operacje_na_plikach_poziom_0()
+
 
     # reset pliku Pogoda_data_sort
     def panel_operacje_na_plikach_reset_plik_sort_czyszczenie_zawartosci_poziom_1(self):
         operacje_na_plikach.reset_plik_sort_czyszczenie_zawartosci()
-        main()
-        pass
+        self.panel_operacje_na_plikach_poziom_0()
 
 #---------------------------D7.PRZYPISANIE KLAS------------------------------------------------
 
@@ -809,6 +879,14 @@ nawigacja = Nawigacja()
 
 def main():
     from time import sleep
+
+    panel_glowny =set()
+    while 't' not in panel_glowny or 'n' not in panel_glowny:
+        panel_glowny.add(input('Czy uruchomic panel główny po załadowaniu danych(t/n)?'))
+        if 't' in panel_glowny:
+            break
+        elif 'n' in panel_glowny:
+            break
 
     while True:
         print('Poczekaj aż się załaduje (do 5)')
@@ -830,6 +908,8 @@ def main():
         except:
             operacje_na_plikach.nadpisywanie_archiwum_plik_sort_calosc()
             print("5b")
-
+        #załdaowanie nawigacji tylko raz podczas dziłania programu
+        if 't' in panel_glowny:
+            nawigacja.panel_startowy()
         sleep(900)
 main()
