@@ -32,7 +32,6 @@ class Pozyskiwane_dane():
             self.strona_n2.update(powtarzalna_strona_n2)
             self.strona_n3.update(powtarzalna_strona_n3)
         self.nr_strony = [self.strona_n1, self.strona_n2,self.strona_n3]
-        self.wyszukane_dane_strona_1 = list(self.przeszukiwana_strona(0))
         self.wyszukane_dane_strona_2 = list(self.przeszukiwana_strona(1))
         self.wyszukane_dane_strona_3 = list(self.przeszukiwana_strona(2))
         self.wyszukane_dane_arch_opad=[]
@@ -53,8 +52,8 @@ class Pozyskiwane_dane():
 
     def akutualna_temp(self):
         try:
-            for i in range(0,len(self.wyszukane_dane_strona_1)):
-                temp=self.re.search(r"TEMPERATURA.+\b(.?[0-9][0-9]?)",self.wyszukane_dane_strona_1[i]).group(1)
+            for i in range(0,len(list(self.przeszukiwana_strona(0)))):
+                temp=self.re.search(r"TEMPERATURA.+\s(.?[0-9][0-9]?)",list(self.przeszukiwana_strona(0))[i]).group(1)
                 return temp
         except:
             temp='Brak danych'
@@ -62,8 +61,8 @@ class Pozyskiwane_dane():
 
     def aktualne_opady(self):
         try:
-            for i in range(0, len(self.wyszukane_dane_strona_1)):
-                opady=self.re.search(r"WARUNKI[.]+.([\w.]*.[\w?.]*.[\w?.]*.[\w?.]*.[\w?.]*.[\w?.]*)",self.wyszukane_dane_strona_1[i]).group(1)
+            for i in range(0, len(list(self.przeszukiwana_strona(0)))):
+                opady=self.re.search(r"WARUNKI[.]+.([\w.]*.[\w?.]*.[\w?.]*.[\w?.]*.[\w?.]*.[\w?.]*)",list(self.przeszukiwana_strona(0))[i]).group(1)
                 return opady
         except:
             opady='Brak danych'
