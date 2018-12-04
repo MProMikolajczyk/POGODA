@@ -19,8 +19,10 @@ class Pozyskiwane_dane():
         self.strona_n2 =dict()
         self.strona_n3 =dict()
         for dzien in range(Daty.dzien,Daty.warunek_brzegowy_dzien):
+            if dzien in range(0, 10):
+                dzien = '0' + str(dzien)
             powtarzalna_strona_n2 = {
-                'https://pogoda.interia.pl/archiwum-pogody-{day}-{mc}-{year},cId,27670'.format(day=dzien,
+                'https://pogoda.interia.pl/archiwum-pogody-{day}-{mc}-{year},cId,27670'.format(day=dzien ,
                                                                                                mc=Daty.miesiac,
                                                                                                year=Daty.rok): \
                     '/html/body/div/div/div/section/div/div/div/div/div/div/span/span/text()'}
